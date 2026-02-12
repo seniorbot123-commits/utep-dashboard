@@ -14,7 +14,7 @@
       --line:#1f4d31;
       --text:#eafff1;
       --muted:#a6d7bb;
-      --accent:#6fbf4a;     /* verde cana */
+      --accent:#6fbf4a;
       --dark:#07140d;
 
       --ok:#22c55e;
@@ -51,7 +51,7 @@
     .error{max-width:1100px;margin:0 auto 12px;background:#7f1d1d;border:1px solid #ef4444;color:#fff;padding:10px;border-radius:12px;display:none;white-space:pre-wrap}
     .footer{max-width:1100px;margin:22px auto 8px;text-align:center;color:var(--muted);font-size:12px}
 
-    /* CALENDÁRIO VISUAL */
+    /* CALENDÁRIO */
     .calWrap{max-width:1100px;margin:0 auto 12px}
     .calCard{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:12px}
     .calHead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -86,7 +86,7 @@
     .baseTitle{font-weight:900}
     .baseMeta{color:var(--muted);font-size:12px}
 
-    /* CARDS DE OBRA */
+    /* OBRA */
     .card{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:10px}
     .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
     .meta{color:var(--muted);font-size:13px;line-height:1.35}
@@ -172,7 +172,7 @@
     <button class="btn btn-gray" id="toggleFilters">Mostrar filtros</button>
     <button class="btn btn-ghost" id="clearFilters">Limpar filtros</button>
     <button class="btn btn-gray" id="toggleCols">Mostrar mais colunas</button>
-    <button class="btn btn-gray" id="exportCsv">Exportar CSV (lista)</button>
+    <button class="btn btn-gray" id="exportCsv">Exportar CSV (tela)</button>
     <button class="btn btn-gray" id="waToday">WhatsApp (somente do dia)</button>
     <button class="btn btn-green" id="reload">Recarregar</button>
   </div>
@@ -209,10 +209,9 @@
       </div>
     </div>
 
-    <!-- 3 BASES FIXAS -->
     <div class="bases" id="bases"></div>
 
-    <div class="footer">UTEP Nordeste • Supabase • Bases + Obras do dia por base + Notas</div>
+    <div class="footer">UTEP Nordeste • Supabase • Obras do dia por base (ou 5 próximas) • Notas</div>
   </div>
 
   <!-- MODAL NOTAS -->
@@ -257,7 +256,7 @@
   </div>
 
 <script>
-/* ====== CONFIG SUPABASE ====== */
+/* ====== SUPABASE ====== */
 const SUPABASE_URL = "https://yyfhnuafwzeglwcpnmkd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_7rmfNL9N6limSSFxFcl2Og_MV9xkbjx";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -265,22 +264,23 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* ====== UTIL ====== */
 const $ = (id)=>document.getElementById(id);
 
-function showErr(msg){
-  const el = $("err");
-  el.style.display="block";
-  el.textContent=String(msg);
-}
-function clearErr(){
-  const el = $("err");
-  el.style.display="none";
-  el.textContent="";
-}
+function showErr(msg){ $("err").style.display="block"; $("err").textContent=String(msg); }
+function clearErr(){ $("err").style.display="none"; $("err").textContent=""; }
+
 function escapeHtml(s){
   return String(s ?? "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;");
+}
+
+function normKey(k){
+  return String(k || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
 }
 
 function pick(obj, keys){
@@ -290,14 +290,6 @@ function pick(obj, keys){
   return "";
 }
 
-/* ====== PICK “SOLTO” (acha coluna mesmo se mudar o nome) ====== */
-function normKey(k){
-  return String(k || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
-}
 function pickLoose(obj, wanted){
   if(!obj) return "";
   const target = normKey(wanted);
@@ -306,6 +298,14 @@ function pickLoose(obj, wanted){
       const v = obj[k];
       if (v !== undefined && v !== null && String(v).trim() !== "") return v;
     }
+  }
+  return "";
+}
+
+function pickAnyLoose(obj, wantedList){
+  for(const w of wantedList){
+    const v = pickLoose(obj, w);
+    if(v) return v;
   }
   return "";
 }
@@ -328,6 +328,7 @@ function parseAnyDate(v){
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
+
 function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
 function sameDay(a,b){
@@ -344,7 +345,7 @@ function fmtBR(d){
   return `${dd}/${mm}/${yyyy}`;
 }
 
-/* ====== STATUS (embutido no texto) ====== */
+/* ====== STATUS ====== */
 function unpackStatus(texto){
   const s = String(texto ?? "");
   const m = s.match(/^\s*\[\[STATUS:(.+?)\]\]\s*\n?/);
@@ -361,12 +362,8 @@ function statusBadge(status){
   return `<span class="badge b-none">ℹ️ Sem status</span>`;
 }
 
-/* ====== BASES FIXAS ====== */
-const BASES = [
-  "Alagoinhas",
-  "Ribeira do Pombal",
-  "Paulo Afonso"
-];
+/* ====== BASES FIXAS (CORRIGIDO) ====== */
+const BASES = ["Alagoinhas","Ribeira do Pombal","Paulo Afonso"];
 
 /* ====== STATE ====== */
 let ALL = [];
@@ -380,7 +377,7 @@ let LAST_STATUS_BY_NOTA = new Map();
 let currentNota = null;
 let currentMeta = null;
 
-let CURRENT_TODAY_ALL_BASES = []; // para WhatsApp do dia (somente do dia, juntando bases)
+let CURRENT_TODAY_ALL_BASES = [];
 
 /* ====== CALENDÁRIO ====== */
 const DOW = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
@@ -430,59 +427,49 @@ function selectDay(iso){
 }
 window.selectDay = selectDay;
 
-/* ====== OBRAS ====== */
-async function fetchObras(){
-  clearErr();
-  $("subtitle").textContent = "Carregando obras...";
-  $("bases").innerHTML = `<div class="empty">Carregando...</div>`;
-
-  const { data, error } = await sb.from("obras").select("*").limit(5000);
-  if(error){
-    showErr("Erro ao carregar obras:\n" + JSON.stringify(error, null, 2));
-    $("bases").innerHTML = "";
-    $("subtitle").textContent = "Erro ao carregar.";
-    return;
-  }
-
-  ALL = data || [];
-  buildFilterOptions();
-  render();
-}
-
-/* Detecta BASE mesmo se variar o nome */
-function getBaseFromRow(o){
-  return (
-    pick(o, ["base","BASE"]) ||
-    pickLoose(o, "base") ||
-    pick(o, ["BASE_OPERACIONAL","BASE OPERACIONAL","BASEOPERACIONAL"]) ||
-    pickLoose(o, "baseoperacional") ||
-    ""
-  );
-}
-
-/* Normaliza BASE para casar com as 3 fixas (flexível) */
+/* ====== DETECTA BASE ====== */
 function normalizeBaseLabel(b){
   const s = String(b || "").trim();
-
   const nk = normKey(s);
 
-  if(nk.includes("alagoinha")) return "3 - Alagoinhas";
+  if(nk.includes("alagoinha")) return "Alagoinhas";
   if(nk.includes("ribeiradopombal") || (nk.includes("pombal") && nk.includes("ribeira"))) return "Ribeira do Pombal";
   if(nk.includes("pauloafonso") || (nk.includes("afonso") && nk.includes("paulo"))) return "Paulo Afonso";
 
-  // tenta match exato com as bases
+  // tenta match exato
   for(const B of BASES){
     if(normKey(B) === nk) return B;
   }
-
   return s;
+}
+
+function inferBaseFromText(o){
+  const blob = [
+    o.baseRaw, o.municipio, o.localidade, o.titulo, o.projeto
+  ].filter(Boolean).join(" ");
+  const nk = normKey(blob);
+
+  if(nk.includes("alagoinha")) return "Alagoinhas";
+  if(nk.includes("ribeiradopombal") || (nk.includes("pombal") && nk.includes("ribeira"))) return "Ribeira do Pombal";
+  if(nk.includes("pauloafonso") || (nk.includes("afonso") && nk.includes("paulo"))) return "Paulo Afonso";
+
+  return "";
+}
+
+function getBaseFromRow(o){
+  // tenta por nomes comuns de coluna
+  const baseRaw =
+    pick(o, ["BASE","base","Base"]) ||
+    pickAnyLoose(o, ["base", "base_operacional", "baseoperacional", "base operacional", "regional", "regiao", "região", "polo", "pólo", "subregional", "sub-regional", "sub regional"]) ||
+    "";
+
+  return baseRaw;
 }
 
 function normalizeObra(o){
   const nota = pick(o, ["nota","NOTA"]) || pickLoose(o, "nota");
   const titulo = pick(o, ["titulo","TITULO"]) || pickLoose(o, "titulo");
 
-  // PROJETO bem “à prova”
   const projeto =
     pick(o, ["projeto","PROJETO","Projeto","NOME_PROJETO","NOME DO PROJETO"]) ||
     pickLoose(o, "projeto") ||
@@ -490,22 +477,33 @@ function normalizeObra(o){
 
   const criterio = pick(o, ["criterio","CRITERIO","criterio_","CRITERIO_"]) || pickLoose(o, "criterio");
   const municipio = pick(o, ["municipio","MUNICIPIO"]) || pickLoose(o, "municipio");
-  const ar = pick(o, ["agente_responsavel","AGENTE_RESPONSAVEL","AR","ar"]) || pickLoose(o, "agenteresponsavel");
+
+  const ar =
+    pick(o, ["agente_responsavel","AGENTE_RESPONSAVEL","AR","ar"]) ||
+    pickLoose(o, "agenteresponsavel") ||
+    pickLoose(o, "responsavel") ||
+    "";
+
   const localidade = pick(o, ["localidade","LOCALIDADE"]) || pickLoose(o, "localidade");
   const gerencia = pick(o, ["gerencia","GERENCIA"]) || pickLoose(o, "gerencia");
 
   const fimRaw =
     pick(o, ["previsao_execucao_fim","PREVISAO_EXECUCAO_FIM"]) ||
-    pickLoose(o, "previsaoexecucaofim") ||
-    pickLoose(o, "previsaofim") ||
+    pickAnyLoose(o, ["previsaoexecucaofim","previsaofim","previsao_fim","prazo_final","prazofinal","fim"]) ||
     "";
 
   const dtFim = parseAnyDate(fimRaw);
 
   const baseRaw = getBaseFromRow(o);
-  const base = normalizeBaseLabel(baseRaw);
+  let base = normalizeBaseLabel(baseRaw);
 
-  return { raw:o, nota, projeto, titulo, criterio, municipio, ar, localidade, gerencia, dtFim, base };
+  // se não bateu nas 3 bases, tenta inferir pelo texto
+  if(!BASES.includes(base)){
+    const inferred = inferBaseFromText({ baseRaw, municipio, localidade, titulo, projeto });
+    if(inferred) base = inferred;
+  }
+
+  return { raw:o, nota, projeto, titulo, criterio, municipio, ar, localidade, gerencia, dtFim, base, baseRaw };
 }
 
 function uniqSorted(arr){
@@ -551,14 +549,12 @@ function applySearch(list){
   });
 }
 
-/* último status por nota (pra badge no card) */
 async function hydrateLastStatus(notas){
   LAST_STATUS_BY_NOTA = new Map();
   const unique = Array.from(new Set((notas||[]).filter(Boolean).map(String)));
   if(unique.length === 0) return;
 
   const slice = unique.slice(0, 400);
-
   const { data, error } = await sb
     .from("notes")
     .select("nota,texto,created_at")
@@ -576,22 +572,38 @@ async function hydrateLastStatus(notas){
   }
 }
 
+/* ====== FETCH ====== */
+async function fetchObras(){
+  clearErr();
+  $("subtitle").textContent = "Carregando obras...";
+  $("bases").innerHTML = `<div class="empty">Carregando...</div>`;
+
+  const { data, error } = await sb.from("obras").select("*").limit(5000);
+  if(error){
+    showErr("Erro ao carregar obras:\n" + JSON.stringify(error, null, 2));
+    $("bases").innerHTML = "";
+    $("subtitle").textContent = "Erro ao carregar.";
+    return;
+  }
+
+  ALL = data || [];
+  buildFilterOptions();
+  render();
+}
+
 /* ====== RENDER POR BASE ====== */
 async function render(){
-  const baseDay = startOfDay(selectedDate);
-  const end5 = startOfDay(addDays(baseDay, 5));
+  const day = startOfDay(selectedDate);
 
   let norm = applySearch(applyFilters(ALL.map(normalizeObra)));
 
-  // separa por base fixa
+  // se alguma obra ficou sem base, ela não aparece. Mas agora a inferência cobre a maioria.
   const byBase = new Map();
   for(const B of BASES) byBase.set(B, []);
   for(const o of norm){
-    const b = BASES.includes(o.base) ? o.base : null;
-    if(b) byBase.get(b).push(o);
+    if(BASES.includes(o.base)) byBase.get(o.base).push(o);
   }
 
-  // calcula: obras do dia por base + fallback 5 mais próximas
   CURRENT_TODAY_ALL_BASES = [];
   const cardsToHydrate = [];
 
@@ -601,20 +613,17 @@ async function render(){
     const arr = (byBase.get(B) || []).filter(x=>x.dtFim);
 
     const todayList = arr
-      .filter(x => sameDay(startOfDay(x.dtFim), baseDay))
+      .filter(x => sameDay(startOfDay(x.dtFim), day))
       .sort((a,b)=>a.dtFim - b.dtFim);
 
     CURRENT_TODAY_ALL_BASES.push(...todayList);
 
     let shown = todayList;
-    let label = `Do dia (${fmtBR(baseDay)})`;
+    let label = `Do dia (${fmtBR(day)})`;
 
     if(shown.length === 0){
       const proximas = arr
-        .filter(x => {
-          const d = startOfDay(x.dtFim);
-          return d >= baseDay;
-        })
+        .filter(x => startOfDay(x.dtFim) >= day)
         .sort((a,b)=>a.dtFim - b.dtFim)
         .slice(0, 5);
 
@@ -623,13 +632,11 @@ async function render(){
     }
 
     cardsToHydrate.push(...shown.map(x=>x.nota));
-
     sections.push({ base: B, label, shown });
   }
 
-  // subtitle geral
   $("subtitle").innerHTML =
-    `Selecionado: <b>${fmtBR(baseDay)}</b> • Em cada base: mostra obras do dia; se não tiver, as <b>5 mais próximas</b>.<br/>
+    `Selecionado: <b>${fmtBR(day)}</b> • Em cada base: obras do dia; se não tiver, <b>5 mais próximas</b>.<br/>
      <span class="meta">WhatsApp envia <b>somente</b> as obras do dia (todas as bases).</span>`;
 
   await hydrateLastStatus(cardsToHydrate);
@@ -687,7 +694,7 @@ async function render(){
   }).join("");
 }
 
-/* ====== WHATSAPP (somente obras do dia, todas as bases) ====== */
+/* ====== WHATSAPP ====== */
 function buildWhatsAppMessage(){
   const d = startOfDay(selectedDate);
   const dataStr = fmtBR(d);
@@ -696,7 +703,6 @@ function buildWhatsAppMessage(){
     return `📌 Acompanhamento UTEP\n\nNenhuma obra com prazo final em *${dataStr}* (de acordo com filtros/busca).`;
   }
 
-  // agrupa por base
   const map = new Map();
   for(const B of BASES) map.set(B, []);
   for(const o of CURRENT_TODAY_ALL_BASES){
@@ -724,16 +730,13 @@ function buildWhatsAppMessage(){
 
 function exportWhatsAppToday(){
   const msg = buildWhatsAppMessage();
-  const url = "https://wa.me/?text=" + encodeURIComponent(msg);
-  window.open(url, "_blank");
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
 }
 
-/* ====== EXPORTAR CSV (tudo que está na tela — por base) ====== */
+/* ====== CSV ====== */
 function exportCsv(){
-  const norm = applySearch(applyFilters(ALL.map(normalizeObra)));
-
-  // monta linhas “do que aparece”: por base, usa mesma regra (dia ou 5 próximas)
   const d = startOfDay(selectedDate);
+  let norm = applySearch(applyFilters(ALL.map(normalizeObra)));
 
   const rows = [];
   for(const B of BASES){
@@ -774,7 +777,6 @@ function exportCsv(){
 
   const headers = Object.keys(rows[0]);
   const esc = (v)=> `"${String(v ?? "").replaceAll('"','""')}"`;
-
   const csv = [
     headers.join(";"),
     ...rows.map(r=>headers.map(h=>esc(r[h])).join(";"))
@@ -922,7 +924,6 @@ $("closeModal").addEventListener("click", closeNotes);
 $("modalBack").addEventListener("click", (e)=>{ if(e.target.id==="modalBack") closeNotes(); });
 $("saveNote").addEventListener("click", saveNote);
 
-/* calendário botões */
 $("prevMonth").addEventListener("click", ()=>{
   viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth()-1, 1);
   renderCalendar();
@@ -940,9 +941,8 @@ $("todayBtn").addEventListener("click", ()=>{
 
 window.openNotes = openNotes;
 
-/* init */
+/* INIT */
 (function init(){
-  // cria base boxes vazias primeiro
   $("bases").innerHTML = BASES.map(b=>`
     <div class="baseCol">
       <div class="baseHead">
