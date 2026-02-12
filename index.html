@@ -8,243 +8,493 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body{
-      font-family: Arial, sans-serif;
-      background:#0f172a;
-      color:#fff;
-      margin:0;
-      padding:16px;
+    :root{
+      --bg:#0f172a;
+      --card:#111b2e;
+      --line:#334155;
+      --text:#ffffff;
+      --muted:#94a3b8;
+      --green:#22c55e;
+      --dark:#020617;
     }
+    body{font-family:Arial, sans-serif;background:var(--bg);color:var(--text);margin:0;padding:14px}
+    h1{margin:6px 0 12px;text-align:center;font-size:24px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:12px}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:10px 12px;border-radius:999px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+    .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
+    .btn-green{background:var(--green);color:#06210f}
+    .btn-gray{background:#334155;color:#fff}
+    .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line)}
+    .input, select{background:var(--dark);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px}
+    .input{min-width:170px}
+    .filters{max-width:980px;margin:0 auto 12px;display:none}
+    .filters.on{display:block}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .label{color:var(--muted);font-size:12px;margin-bottom:6px}
+    .card{max-width:980px;margin:0 auto 12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+    .meta{color:var(--muted);font-size:13px;line-height:1.35}
+    .title{font-size:16px;font-weight:900;margin-top:8px}
+    .kvs{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+    .kv{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+    .kv b{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+    .kv span{font-weight:900}
+    .empty{max-width:980px;margin:20px auto;text-align:center;color:var(--muted)}
+    .error{max-width:980px;margin:0 auto 12px;background:#7f1d1d;border:1px solid #ef4444;color:#fff;padding:10px;border-radius:12px;display:none;white-space:pre-wrap}
+    .footer{max-width:980px;margin:22px auto 8px;text-align:center;color:var(--muted);font-size:12px}
 
-    h1{ text-align:center; }
+    /* Modal */
+    .modalBack{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
+    .modalBack.on{display:flex}
+    .modal{width:min(900px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+    .modalHead{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+    .modalTitle{font-weight:900;font-size:18px;margin:0}
+    textarea{width:100%;background:var(--dark);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;min-height:84px;resize:vertical}
+    .noteItem{background:var(--dark);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
+    .noteTop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+    .noteText{margin-top:8px;white-space:pre-wrap;line-height:1.35}
 
-    .toolbar{
-      display:flex;
-      justify-content:center;
-      gap:12px;
-      margin-bottom:20px;
-    }
-
-    .btn{
-      background:#22c55e;
-      border:none;
-      padding:10px 16px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:bold;
-    }
-
-    .card{
-      background:#111b2e;
-      border:1px solid #334155;
-      border-radius:14px;
-      padding:16px;
-      margin-bottom:16px;
-    }
-
-    .meta{ color:#94a3b8; font-size:14px; }
-
-    input, textarea{
-      width:100%;
-      padding:8px;
-      border-radius:8px;
-      border:1px solid #334155;
-      background:#020617;
-      color:#fff;
-    }
-
-    textarea{ min-height:70px; }
-
-    .notaBox{ margin-top:12px; }
-
-    .notaTop{
-      display:flex;
-      justify-content:space-between;
-      font-size:14px;
-      color:#94a3b8;
-    }
-
-    .error{
-      background:#7f1d1d;
-      padding:10px;
-      border-radius:10px;
-      margin-bottom:12px;
-      display:none;
-      white-space:pre-wrap;
-    }
-
-    .footer{
-      text-align:center;
-      margin-top:30px;
-      color:#94a3b8;
-      font-size:13px;
+    @media (max-width:920px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+    @media (max-width:560px){
+      body{padding:12px}
+      .grid{grid-template-columns:1fr}
+      .input, select{width:100%;min-width:0;font-size:16px}
+      .btn{width:auto}
     }
   </style>
 </head>
 
 <body>
+  <h1>Acompanhamento de Obras</h1>
 
-<h1>Acompanhamento de Obras</h1>
+  <div class="toolbar">
+    <span class="pill">
+      <span class="meta">Dia</span>
+      <input class="input" id="dayPicker" type="date"/>
+    </span>
 
-<div class="toolbar">
-  <button class="btn" id="reload">Recarregar</button>
-</div>
+    <button class="btn btn-gray" id="toggleFilters">Mostrar filtros</button>
+    <button class="btn btn-green" id="reload">Recarregar</button>
+  </div>
 
-<div id="err" class="error"></div>
-<div id="lista"></div>
+  <div id="err" class="error"></div>
 
-<div class="footer">
-  UTEP Nordeste • Supabase + GitHub Pages
-</div>
+  <div id="filters" class="filters">
+    <div class="card">
+      <div class="row">
+        <div class="meta"><b>Filtros</b> (selecione e a lista atualiza)</div>
+        <button class="btn btn-ghost" id="clearFilters">Limpar filtros</button>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="grid">
+        <div>
+          <div class="label">CRITÉRIO</div>
+          <select id="fCriterio"></select>
+        </div>
+        <div>
+          <div class="label">MUNICÍPIO</div>
+          <select id="fMunicipio"></select>
+        </div>
+        <div>
+          <div class="label">AGENTE RESPONSÁVEL (AR)</div>
+          <select id="fAR"></select>
+        </div>
+        <div>
+          <div class="label">UNIDADE</div>
+          <select id="fUnidade"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lista"></div>
+
+  <div class="footer">UTEP Nordeste • Supabase • Calendário + Filtros + Notas</div>
+
+  <!-- MODAL NOTAS -->
+  <div id="modalBack" class="modalBack">
+    <div class="modal">
+      <div class="modalHead">
+        <div>
+          <p class="modalTitle" id="modalTitle">Notas</p>
+          <div class="meta" id="modalMeta"></div>
+        </div>
+        <button class="btn btn-gray" id="closeModal">Fechar</button>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="grid" style="grid-template-columns:1fr 2fr;gap:10px">
+        <div>
+          <div class="label">Seu nome</div>
+          <input class="input" id="noteAuthor" placeholder="Ex.: João Silva"/>
+        </div>
+        <div>
+          <div class="label">Adicionar nota</div>
+          <textarea id="noteText" placeholder="Escreva a observação desta obra..."></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button class="btn btn-green" id="saveNote">Salvar nota</button>
+      </div>
+
+      <div style="height:10px"></div>
+      <div id="notesList"></div>
+    </div>
+  </div>
 
 <script>
+/* ====== CONFIG SUPABASE ====== */
 const SUPABASE_URL = "https://yyfhnuafwzeglwcpnmkd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_7rmfNL9N6limSSFxFcl2Og_MV9xkbjx";
-
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* ====== UTIL ====== */
+const $ = (id)=>document.getElementById(id);
+
 function showErr(msg){
-  const el=document.getElementById("err");
+  const el = $("err");
   el.style.display="block";
   el.textContent=String(msg);
 }
-
 function clearErr(){
-  const el=document.getElementById("err");
+  const el = $("err");
   el.style.display="none";
+  el.textContent="";
 }
-
 function escapeHtml(s){
   return String(s ?? "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;");
+}
+function pick(obj, keys){
+  for(const k of keys){
+    if(obj && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") return obj[k];
+  }
+  return "";
 }
 
-async function carregarObras(){
+// aceita "DD/MM/AAAA", "AAAA-MM-DD", ISO etc.
+function parseAnyDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+
+  // DD/MM/AAAA
+  const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(m){
+    const [_, dd, mm, yyyy] = m;
+    return new Date(Number(yyyy), Number(mm)-1, Number(dd));
+  }
+
+  // AAAA-MM-DD
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m2){
+    const [_, yyyy, mm, dd] = m2;
+    return new Date(Number(yyyy), Number(mm)-1, Number(dd));
+  }
+
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function toISODate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+function sameDay(a,b){
+  return a && b &&
+    a.getFullYear()===b.getFullYear() &&
+    a.getMonth()===b.getMonth() &&
+    a.getDate()===b.getDate();
+}
+
+function fmtBR(d){
+  if(!d) return "-";
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+/* ====== STATE ====== */
+let ALL = [];
+let FILTERS = { criterio:"", municipio:"", ar:"", unidade:"" };
+
+let currentNota = null;
+let currentMeta = null;
+
+/* ====== CARREGAR OBRAS ====== */
+async function fetchObras(){
   clearErr();
+  $("lista").innerHTML = `<div class="empty">Carregando obras...</div>`;
 
-  const lista=document.getElementById("lista");
-  lista.innerHTML="Carregando obras...";
-
-  const { data, error } = await sb
-    .from("obras")
-    .select("*")
-    .limit(2000);
-
+  const { data, error } = await sb.from("obras").select("*").limit(5000);
   if(error){
     showErr("Erro ao carregar obras:\n" + JSON.stringify(error, null, 2));
-    lista.innerHTML="";
+    $("lista").innerHTML = "";
     return;
   }
-
-  if(!data.length){
-    lista.innerHTML="Nenhuma obra encontrada.";
-    return;
-  }
-
-  lista.innerHTML="";
-
-  for(const obra of data){
-
-    const nota = obra.nota || obra.NOTA || "-";
-    const projeto = obra.projeto || obra.PROJETO || "-";
-    const titulo = obra.titulo || obra.TITULO || "-";
-
-    const div=document.createElement("div");
-    div.className="card";
-
-    div.innerHTML=`
-      <div><b>Nota:</b> ${escapeHtml(nota)}</div>
-      <div><b>Projeto:</b> ${escapeHtml(projeto)}</div>
-      <div class="meta"><b>Título:</b> ${escapeHtml(titulo)}</div>
-
-      <br>
-
-      <label>Seu nome</label>
-      <input id="nome-${nota}" placeholder="Ex: João Silva">
-
-      <br><br>
-
-      <label>Adicionar anotação</label>
-      <textarea id="texto-${nota}" placeholder="Escreva a observação..."></textarea>
-
-      <br>
-      <button class="btn" onclick="salvarNota('${nota}')">Salvar nota</button>
-
-      <div id="notas-${nota}" class="notaBox">
-        Carregando notas...
-      </div>
-    `;
-
-    lista.appendChild(div);
-
-    if(nota !== "-") carregarNotas(nota);
-  }
+  ALL = data || [];
+  buildFilterOptions();
+  render();
 }
 
-async function carregarNotas(nota){
-  const box=document.getElementById(`notas-${nota}`);
-  if(!box) return;
+function normalizeObra(o){
+  const nota = pick(o, ["nota","NOTA"]);
+  const projeto = pick(o, ["projeto","PROJETO"]);
+  const titulo = pick(o, ["titulo","TITULO"]);
+  const criterio = pick(o, ["criterio","CRITERIO","criterio_","CRITERIO_"]);
+  const municipio = pick(o, ["municipio","MUNICIPIO"]);
+  const ar = pick(o, ["agente_responsavel","AGENTE_RESPONSAVEL"]);
+  const unidade = pick(o, ["unidade","UNIDADE"]);
+  const localidade = pick(o, ["localidade","LOCALIDADE"]);
+  const gerencia = pick(o, ["gerencia","GERENCIA"]);
+
+  const fimRaw = pick(o, ["previsao_execucao_fim","PREVISAO_EXECUCAO_FIM"]);
+  const iniRaw = pick(o, ["previsao_execucao_inicio","PREVISAO_EXECUCAO_INICIO"]);
+
+  const dtFim = parseAnyDate(fimRaw);
+  const dtIni = parseAnyDate(iniRaw);
+
+  return { raw:o, nota, projeto, titulo, criterio, municipio, ar, unidade, localidade, gerencia, dtFim, dtIni };
+}
+
+function buildFilterOptions(){
+  const norm = ALL.map(normalizeObra);
+
+  const uniq = (arr)=>Array.from(new Set(arr.filter(Boolean).map(x=>String(x).trim()))).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  const criterios = uniq(norm.map(x=>x.criterio));
+  const municipios = uniq(norm.map(x=>x.municipio));
+  const ars = uniq(norm.map(x=>x.ar));
+  const unidades = uniq(norm.map(x=>x.unidade));
+
+  fillSelect($("fCriterio"), ["", ...criterios], "Todos");
+  fillSelect($("fMunicipio"), ["", ...municipios], "Todos");
+  fillSelect($("fAR"), ["", ...ars], "Todos");
+  fillSelect($("fUnidade"), ["", ...unidades], "Todos");
+}
+
+function fillSelect(sel, values, allLabel){
+  const cur = sel.value;
+  sel.innerHTML = "";
+  values.forEach(v=>{
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v ? v : allLabel;
+    sel.appendChild(opt);
+  });
+  // tenta manter seleção
+  if(values.includes(cur)) sel.value = cur;
+}
+
+/* ====== RENDER ====== */
+function render(){
+  const day = parseAnyDate($("dayPicker").value);
+  const today = day || new Date();
+
+  const norm = ALL.map(normalizeObra);
+
+  // aplica filtros
+  const filtered = norm.filter(x=>{
+    if(FILTERS.criterio && String(x.criterio) !== FILTERS.criterio) return false;
+    if(FILTERS.municipio && String(x.municipio) !== FILTERS.municipio) return false;
+    if(FILTERS.ar && String(x.ar) !== FILTERS.ar) return false;
+    if(FILTERS.unidade && String(x.unidade) !== FILTERS.unidade) return false;
+    return true;
+  });
+
+  // obras do dia (prazo final = dia escolhido)
+  const doDia = filtered
+    .filter(x=>x.dtFim && sameDay(x.dtFim, today))
+    .sort((a,b)=>a.dtFim - b.dtFim);
+
+  let list = doDia;
+  let header = `Obras com prazo final em <b>${fmtBR(today)}</b>`;
+
+  // fallback: próximas a vencer (>= dia escolhido)
+  if(list.length === 0){
+    const futuras = filtered
+      .filter(x=>x.dtFim && x.dtFim >= new Date(today.getFullYear(), today.getMonth(), today.getDate()))
+      .sort((a,b)=>a.dtFim - b.dtFim)
+      .slice(0, 12);
+
+    list = futuras;
+    header = `Nenhuma obra vence em <b>${fmtBR(today)}</b>. Mostrando as <b>próximas a vencer</b>`;
+  }
+
+  if(list.length === 0){
+    $("lista").innerHTML = `<div class="empty">Sem obras para mostrar com os filtros atuais.</div>`;
+    return;
+  }
+
+  let html = `<div class="card"><div class="row">
+    <div class="meta">${header}</div>
+    <div class="meta">Total exibido: <b>${list.length}</b></div>
+  </div></div>`;
+
+  html += list.map(x=>{
+    const prazo = x.dtFim ? fmtBR(x.dtFim) : "-";
+    const ini = x.dtIni ? fmtBR(x.dtIni) : "-";
+
+    return `
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="title">${escapeHtml(x.titulo || "(Sem título)")}</div>
+            <div class="meta">${escapeHtml(x.criterio || "")} • ${escapeHtml(x.municipio || "")} • ${escapeHtml(x.localidade || "")}</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn btn-gray" onclick="openNotes('${escapeHtml(String(x.nota))}')">Notas</button>
+          </div>
+        </div>
+
+        <div class="kvs">
+          <div class="kv"><b>NOTA</b><span>${escapeHtml(x.nota || "-")}</span></div>
+          <div class="kv"><b>PROJETO</b><span>${escapeHtml(x.projeto || "-")}</span></div>
+          <div class="kv"><b>PRAZO FINAL</b><span>${escapeHtml(prazo)}</span></div>
+          <div class="kv"><b>INÍCIO</b><span>${escapeHtml(ini)}</span></div>
+          <div class="kv"><b>AR</b><span>${escapeHtml(x.ar || "-")}</span></div>
+          <div class="kv"><b>UNIDADE</b><span>${escapeHtml(x.unidade || "-")}</span></div>
+          <div class="kv"><b>GERÊNCIA</b><span>${escapeHtml(x.gerencia || "-")}</span></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  $("lista").innerHTML = html;
+}
+
+/* ====== NOTAS (MODAL) ====== */
+async function openNotes(nota){
+  currentNota = String(nota);
+  $("modalBack").classList.add("on");
+  $("notesList").innerHTML = `<div class="meta">Carregando notas...</div>`;
+  $("noteText").value = "";
+
+  // pega meta da obra atual pra mostrar no cabeçalho
+  const found = ALL.map(normalizeObra).find(x=>String(x.nota) === currentNota);
+  currentMeta = found || null;
+
+  $("modalTitle").textContent = `Notas - Nota ${currentNota}`;
+  $("modalMeta").innerHTML = currentMeta
+    ? `${escapeHtml(currentMeta.titulo || "")} • ${escapeHtml(currentMeta.municipio || "")} • ${escapeHtml(currentMeta.criterio || "")}`
+    : "";
+
+  await loadNotes();
+}
+
+function closeNotes(){
+  $("modalBack").classList.remove("on");
+  currentNota = null;
+  currentMeta = null;
+}
+
+async function loadNotes(){
+  if(!currentNota) return;
 
   const { data, error } = await sb
     .from("notes")
-    .select("*")
-    .eq("nota", String(nota))
-    .order("created_at",{ascending:false});
+    .select("id,nota,autor,texto,created_at")
+    .eq("nota", currentNota)
+    .order("created_at", { ascending:false });
 
   if(error){
-    box.innerHTML="Erro ao carregar notas.";
+    $("notesList").innerHTML = `<div class="meta">Erro ao carregar notas:<br>${escapeHtml(JSON.stringify(error))}</div>`;
     return;
   }
 
-  if(!data.length){
-    box.innerHTML="Sem notas ainda.";
+  if(!data || data.length === 0){
+    $("notesList").innerHTML = `<div class="meta">Sem notas ainda.</div>`;
     return;
   }
 
-  box.innerHTML=data.map(n=>{
-    const dt = new Date(n.created_at).toLocaleString("pt-BR");
-
+  $("notesList").innerHTML = data.map(n=>{
+    const dt = n.created_at ? new Date(n.created_at).toLocaleString("pt-BR") : "-";
     return `
-      <div class="card" style="background:#020617">
-        <div class="notaTop">
-          <b>${escapeHtml(n.autor)}</b>
-          <span>${dt}</span>
+      <div class="noteItem">
+        <div class="noteTop">
+          <div><b>${escapeHtml(n.autor || "(sem autor)")}</b></div>
+          <div>${escapeHtml(dt)}</div>
         </div>
-        <div style="margin-top:6px">${escapeHtml(n.texto)}</div>
+        <div class="noteText">${escapeHtml(n.texto || "")}</div>
       </div>
     `;
   }).join("");
 }
 
-async function salvarNota(nota){
-  clearErr();
+async function saveNote(){
+  if(!currentNota) return;
 
-  const autor=document.getElementById(`nome-${nota}`).value.trim();
-  const texto=document.getElementById(`texto-${nota}`).value.trim();
+  const autor = $("noteAuthor").value.trim();
+  const texto = $("noteText").value.trim();
 
   if(!autor || !texto){
-    showErr("Preencha nome e anotação.");
+    showErr("Preencha seu nome e a anotação antes de salvar.");
     return;
   }
+  clearErr();
 
-  const { error } = await sb
-    .from("notes")
-    .insert({ nota:String(nota), autor, texto });
+  const { error } = await sb.from("notes").insert({
+    nota: currentNota,
+    autor,
+    texto
+  });
 
   if(error){
-    showErr("Erro ao salvar nota:\n" + JSON.stringify(error,null,2));
+    showErr("Erro ao salvar nota:\n" + JSON.stringify(error, null, 2));
     return;
   }
 
-  document.getElementById(`texto-${nota}`).value="";
-  carregarNotas(nota);
+  $("noteText").value = "";
+  await loadNotes();
 }
 
-document.getElementById("reload").onclick = carregarObras;
+/* ====== EVENTOS ====== */
+$("reload").addEventListener("click", fetchObras);
 
-carregarObras();
+$("toggleFilters").addEventListener("click", ()=>{
+  const box = $("filters");
+  box.classList.toggle("on");
+  $("toggleFilters").textContent = box.classList.contains("on") ? "Ocultar filtros" : "Mostrar filtros";
+});
+
+$("clearFilters").addEventListener("click", ()=>{
+  FILTERS = { criterio:"", municipio:"", ar:"", unidade:"" };
+  $("fCriterio").value = "";
+  $("fMunicipio").value = "";
+  $("fAR").value = "";
+  $("fUnidade").value = "";
+  render();
+});
+
+$("fCriterio").addEventListener("change", (e)=>{ FILTERS.criterio = e.target.value; render(); });
+$("fMunicipio").addEventListener("change", (e)=>{ FILTERS.municipio = e.target.value; render(); });
+$("fAR").addEventListener("change", (e)=>{ FILTERS.ar = e.target.value; render(); });
+$("fUnidade").addEventListener("change", (e)=>{ FILTERS.unidade = e.target.value; render(); });
+
+$("closeModal").addEventListener("click", closeNotes);
+$("modalBack").addEventListener("click", (e)=>{ if(e.target.id==="modalBack") closeNotes(); });
+$("saveNote").addEventListener("click", saveNote);
+
+// calendário default hoje
+(function init(){
+  const d = new Date();
+  $("dayPicker").value = toISODate(d);
+  $("dayPicker").addEventListener("change", render);
+  fetchObras();
+})();
+
+// expõe função pro botão
+window.openNotes = openNotes;
 </script>
 
 </body>
