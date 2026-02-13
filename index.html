@@ -1,964 +1,1198 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Acompanhamento de Obras</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Acompanhamento Diário — UTEP Nordeste</title>
   <style>
     :root{
-      --bg:#0b1f13;
-      --card:#0f2a1a;
-      --line:#1f4d31;
-      --text:#eafff1;
-      --muted:#a6d7bb;
-      --accent:#6fbf4a;
-      --dark:#07140d;
-
-      --ok:#22c55e;
-      --warn:#f59e0b;
-      --bad:#ef4444;
+      --bg:#0b1f10;
+      --panel:#0f2a16;
+      --card:#13331b;
+      --border:#235a33;
+      --muted:#b9d8c0;
+      --text:#e8fff0;
+      --accent:#66c26f;      /* verde cana */
+      --accent2:#2fbf5b;
+      --warn:#f2c94c;
+      --bad:#eb5757;
+      --ok:#27ae60;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 50% -20%, rgba(102,194,111,.22), transparent 60%),
+                  linear-gradient(180deg, #07140c, var(--bg));
+      color:var(--text);
+      padding:18px;
+    }
+    h1{
+      margin:6px 0 2px;
+      text-align:center;
+      letter-spacing:.3px;
+      font-weight:900;
+    }
+    .sub{
+      text-align:center;
+      color:var(--muted);
+      margin:0 0 14px;
+      font-size:13px;
     }
 
-    body{font-family:Arial, sans-serif;background:var(--bg);color:var(--text);margin:0;padding:14px}
-    h1{margin:6px 0 8px;text-align:center;font-size:24px}
-    .sub{max-width:1100px;margin:0 auto 12px;text-align:center;color:var(--muted);font-size:13px;line-height:1.35}
-
-    .toolbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:12px}
-    .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
-    .btn-green{background:var(--accent);color:#07210f}
-    .btn-gray{background:#1e3a2a;color:#fff}
-    .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line)}
-    .input{
-      background:var(--dark);
-      border:1px solid var(--line);
-      color:#fff;
-      border-radius:12px;
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:center;
+      align-items:center;
+      margin:10px auto 14px;
+      max-width:1200px;
+    }
+    .pill{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
       padding:10px 12px;
-      font-size:16px;
-      min-width:260px;
+      border-radius:999px;
+      color:var(--text);
+      font-size:13px;
+      display:flex;
+      gap:10px;
+      align-items:center;
     }
-    select{background:var(--dark);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;width:100%}
+    .btn{
+      cursor:pointer;
+      border:none;
+      background:linear-gradient(180deg, rgba(102,194,111,.95), rgba(47,191,91,.9));
+      color:#06210f;
+      font-weight:900;
+      padding:10px 14px;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      font-size:13px;
+      transition: transform .05s ease;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      border:1px solid var(--border);
+      box-shadow:none;
+      font-weight:800;
+    }
+    .btn.small{padding:8px 10px; border-radius:10px; font-size:12px}
+    .btn.whats{
+      background: linear-gradient(180deg, #25D366, #1fbe58);
+      color:#07210f;
+      font-weight:950;
+    }
 
-    .filters{max-width:1100px;margin:0 auto 12px;display:none}
-    .filters.on{display:block}
-    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-    .label{color:var(--muted);font-size:12px;margin-bottom:6px}
+    .layout{
+      display:grid;
+      grid-template-columns: 380px 1fr;
+      gap:14px;
+      max-width:1200px;
+      margin:0 auto;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr;}
+    }
 
-    .wrap{max-width:1100px;margin:0 auto}
-    .error{max-width:1100px;margin:0 auto 12px;background:#7f1d1d;border:1px solid #ef4444;color:#fff;padding:10px;border-radius:12px;display:none;white-space:pre-wrap}
-    .footer{max-width:1100px;margin:22px auto 8px;text-align:center;color:var(--muted);font-size:12px}
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:14px;
+      box-shadow: var(--shadow);
+    }
+    .panel h2{
+      margin:0 0 8px;
+      font-size:14px;
+      letter-spacing:.2px;
+      color:var(--text);
+      font-weight:900;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+      display:block;
+      margin-bottom:6px;
+      font-weight:700;
+    }
+    select, input, textarea{
+      width:100%;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 10px;
+      font-size:14px;
+      outline:none;
+    }
+    textarea{min-height:84px; resize:vertical}
+    .muted{color:var(--muted); font-size:12px}
 
-    /* CALENDÁRIO */
-    .calWrap{max-width:1100px;margin:0 auto 12px}
-    .calCard{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:12px}
-    .calHead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-    .calTitle{font-weight:900}
-    .calBtns{display:flex;gap:10px}
-    .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:12px}
-    .calDow{color:var(--muted);font-size:12px;text-align:center}
+    .bases{
+      display:grid;
+      gap:12px;
+    }
+    .baseBlock{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.08));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:12px;
+      box-shadow: var(--shadow);
+    }
+    .baseHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .baseTitle{
+      font-size:15px;
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .count{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--border);
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+      font-weight:800;
+    }
+
+    .cards{
+      display:grid;
+      gap:10px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.10));
+      border:1px solid rgba(255,255,255,.08);
+      border-left: 4px solid rgba(102,194,111,.9);
+      border-radius: 14px;
+      padding:12px;
+    }
+    .cardTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .title{
+      font-weight:950;
+      margin:0 0 6px;
+      font-size:14px;
+      line-height:1.2;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .tag{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      padding:4px 8px;
+      border-radius:999px;
+      color:var(--text);
+      font-weight:850;
+      font-size:11px;
+    }
+    .tag.ok{background:rgba(39,174,96,.16); border-color:rgba(39,174,96,.5)}
+    .tag.warn{background:rgba(242,201,76,.16); border-color:rgba(242,201,76,.5)}
+    .tag.bad{background:rgba(235,87,87,.16); border-color:rgba(235,87,87,.5)}
+    .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .error{
+      max-width:1200px;
+      margin:0 auto 12px;
+      color:#ffd6d6;
+      background: rgba(235,87,87,.10);
+      border:1px solid rgba(235,87,87,.35);
+      padding:10px 12px;
+      border-radius:12px;
+      display:none;
+      font-weight:800;
+    }
+
+    /* calendário */
+    .calWrap{ display:grid; gap:10px; margin-top:8px; }
+    .calHeader{
+      display:flex; justify-content:space-between; align-items:center; gap:8px;
+    }
+    .calHeader .month{ font-weight:950; letter-spacing:.2px; }
+    .calGrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:6px;
+      background:rgba(0,0,0,.10);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+    }
+    .dow{
+      text-align:center;
+      font-size:11px;
+      color:var(--muted);
+      padding:4px 0;
+      font-weight:900;
+    }
     .day{
       text-align:center;
       padding:10px 0;
       border-radius:12px;
-      border:1px solid transparent;
-      background:rgba(255,255,255,.03);
       cursor:pointer;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+      font-weight:950;
+      font-size:12px;
       user-select:none;
     }
-    .day.muted{opacity:.35;cursor:default}
-    .day.today{border-color:rgba(111,191,74,.5)}
-    .day.sel{background:rgba(111,191,74,.35);border-color:var(--accent)}
-    .day:hover{border-color:rgba(111,191,74,.35)}
-    .calInfo{margin-top:10px;color:var(--muted);font-size:13px}
-
-    /* BASES */
-    .bases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    .baseCol{
-      background:rgba(255,255,255,.03);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px;
+    .day:hover{border-color: rgba(102,194,111,.6)}
+    .day.mutedDay{opacity:.35}
+    .day.today{outline:2px solid rgba(102,194,111,.75)}
+    .day.selected{
+      background:rgba(102,194,111,.22);
+      border-color: rgba(102,194,111,.75);
     }
-    .baseHead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-    .baseTitle{font-weight:900}
-    .baseMeta{color:var(--muted);font-size:12px}
 
-    /* OBRA */
-    .card{background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:10px}
-    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-    .meta{color:var(--muted);font-size:13px;line-height:1.35}
-    .title{font-size:15px;font-weight:900;margin-top:4px}
-    .topRight{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-
-    .kvs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-    .kv{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
-    .kv b{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
-    .kv span{font-weight:900}
-
-    .moreCols{display:none}
-    .moreOn .moreCols{display:flex}
-
-    .empty{margin:10px 0;text-align:center;color:var(--muted);font-size:13px}
-
-    .badge{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:6px 10px;border-radius:999px;
-      font-weight:900;font-size:12px;border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      white-space:nowrap;
+    /* Colunas extras (chooser) */
+    .colsGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:8px;
+      margin-top:8px;
     }
-    .b-ok{border-color:rgba(34,197,94,.55); background:rgba(34,197,94,.12)}
-    .b-warn{border-color:rgba(245,158,11,.55); background:rgba(245,158,11,.12)}
-    .b-bad{border-color:rgba(239,68,68,.55); background:rgba(239,68,68,.12)}
-    .b-none{opacity:.9}
-
-    /* Modal */
-    .modalBack{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9999}
-    .modalBack.on{display:flex}
-    .modal{width:min(900px,100%);background:rgba(15,42,26,.98);border:1px solid var(--line);border-radius:16px;padding:14px}
-    .modalHead{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
-    .modalTitle{font-weight:900;font-size:18px;margin:0}
-    input, textarea{
-      width:100%;
-      background:var(--dark);
-      border:1px solid var(--line);
-      color:#fff;
+    .colItem{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 10px;
       border-radius:12px;
-      padding:10px 12px;
-      font-size:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
     }
-    textarea{min-height:84px;resize:vertical}
+    .colItem input{ width:auto; transform: scale(1.15); }
 
-    .noteItem{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
-    .noteTop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}
-    .noteText{margin-top:8px;white-space:pre-wrap;line-height:1.35}
+    /* Modal notas */
+    .modalOverlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:9999;
+    }
+    .modal{
+      width:min(760px, 96vw);
+      background: linear-gradient(180deg, rgba(19,51,27,.98), rgba(10,28,16,.98));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding:14px;
+    }
+    .modalHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .modalTitle{
+      font-weight:950;
+      font-size:15px;
+      margin:0;
+    }
+    .modalSub{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:6px;
+      line-height:1.35;
+      font-weight:750;
+    }
+    .noteList{
+      margin-top:10px;
+      display:grid;
+      gap:8px;
+      max-height:260px;
+      overflow:auto;
+      padding-right:6px;
+    }
+    .noteItem{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:10px;
+    }
+    .noteTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      margin-bottom:6px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+    }
+    .noteTxt{
+      white-space:pre-wrap;
+      font-size:13px;
+      color:var(--text);
+      line-height:1.35;
+      font-weight:700;
+    }
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .split{grid-template-columns:1fr;}
+    }
 
-    @media (max-width:1080px){
-      .bases{grid-template-columns:1fr}
-      .input{min-width:0;width:100%}
+    .footer{
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:16px;
+      opacity:.9;
+      font-weight:750;
     }
   </style>
 </head>
 
 <body>
-  <h1>Acompanhamento de Obras</h1>
-  <div class="sub" id="subtitle">Carregando...</div>
+  <h1>Acompanhamento Diário</h1>
+  <p class="sub">UTEP Nordeste • Prazo final = <b>PREVISAO_EXECUCAO_FIM</b></p>
 
-  <!-- CALENDÁRIO -->
-  <div class="calWrap">
-    <div class="calCard">
-      <div class="calHead">
-        <div>
-          <div class="calTitle" id="calTitle">Calendário</div>
-          <div class="calInfo" id="calInfo">Selecionado: -</div>
+  <div id="err" class="error"></div>
+
+  <div class="topbar">
+    <div class="pill">
+      <b>Data selecionada:</b> <span id="selDateLbl">—</span>
+    </div>
+    <button class="btn secondary" id="toggleFilters">Mostrar filtros</button>
+    <button class="btn secondary" id="clearFilters">Limpar filtros</button>
+    <button class="btn" id="reload">Recarregar</button>
+    <button class="btn whats" id="exportWhats">Exportar WhatsApp (somente do dia)</button>
+  </div>
+
+  <div class="layout">
+    <!-- Painel -->
+    <div class="panel">
+      <h2>Calendário</h2>
+
+      <div class="calWrap">
+        <div class="calHeader">
+          <button class="btn secondary small" id="prevMonth">◀</button>
+          <div class="month" id="monthLbl">—</div>
+          <button class="btn secondary small" id="nextMonth">▶</button>
         </div>
-        <div class="calBtns">
-          <button class="btn btn-ghost" id="prevMonth">◀</button>
-          <button class="btn btn-ghost" id="todayBtn">Hoje</button>
-          <button class="btn btn-ghost" id="nextMonth">▶</button>
+        <div class="calGrid" id="calGrid"></div>
+        <div class="muted">
+          Toque no dia para filtrar por <b>FIM</b>. Se não houver obras no dia, mostramos as próximas dentro de <b>5 dias</b>.
         </div>
       </div>
 
-      <div class="calGrid" id="calDow"></div>
-      <div class="calGrid" id="calDays"></div>
-    </div>
-  </div>
-
-  <div class="toolbar">
-    <input class="input" id="q" placeholder="Buscar (nota, projeto, título)..." />
-    <button class="btn btn-gray" id="toggleFilters">Mostrar filtros</button>
-    <button class="btn btn-ghost" id="clearFilters">Limpar filtros</button>
-    <button class="btn btn-gray" id="toggleCols">Mostrar mais colunas</button>
-    <button class="btn btn-gray" id="exportCsv">Exportar CSV (tela)</button>
-    <button class="btn btn-gray" id="waToday">WhatsApp (somente do dia)</button>
-    <button class="btn btn-green" id="reload">Recarregar</button>
-  </div>
-
-  <div class="wrap">
-    <div id="err" class="error"></div>
-
-    <div id="filters" class="filters">
-      <div class="calCard">
+      <div id="filtersPanel" style="display:none; margin-top:14px;">
+        <h2>Filtros</h2>
         <div class="row">
-          <div class="meta"><b>Filtros</b> (selecionou → atualiza)</div>
-        </div>
-
-        <div style="height:12px"></div>
-
-        <div class="grid">
           <div>
-            <div class="label">CRITÉRIO</div>
+            <label>Critério</label>
             <select id="fCriterio"></select>
           </div>
           <div>
-            <div class="label">MUNICÍPIO</div>
-            <select id="fMunicipio"></select>
+            <label>Agente Responsável</label>
+            <select id="fAgente"></select>
           </div>
           <div>
-            <div class="label">AGENTE RESPONSÁVEL (AR)</div>
-            <select id="fAR"></select>
+            <label>Gerência</label>
+            <select id="fGerencia"></select>
           </div>
           <div>
-            <div class="label">BASE</div>
-            <select id="fBase"></select>
+            <label>Status</label>
+            <select id="fStatus"></select>
+          </div>
+          <div>
+            <label>Busca (nota / título / município / projeto)</label>
+            <input id="fBusca" placeholder="Digite para filtrar..." />
+          </div>
+
+          <h2 style="margin-top:6px;">Exibir colunas extras</h2>
+          <div class="muted">Marque as colunas que quer ver. Isso fica salvo no aparelho do usuário.</div>
+          <div id="colsBox" class="colsGrid"></div>
+
+          <div class="muted">
+            Fixas: <b>NOTA</b>, <b>PROJETO</b>, <b>TÍTULO</b>, <b>MUNICÍPIO</b>, <b>FIM</b>, <b>CRITÉRIO</b>.
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Lista -->
     <div class="bases" id="bases"></div>
-
-    <div class="footer">UTEP Nordeste • Supabase • Obras do dia por base (ou 5 próximas) • Notas</div>
   </div>
 
-  <!-- MODAL NOTAS -->
-  <div id="modalBack" class="modalBack">
+  <div class="footer">Acompanhamento — UTEP Nordeste</div>
+
+  <!-- Modal Notas -->
+  <div class="modalOverlay" id="modalOverlay">
     <div class="modal">
       <div class="modalHead">
         <div>
-          <p class="modalTitle" id="modalTitle">Notas</p>
-          <div class="meta" id="modalMeta"></div>
+          <div class="modalTitle" id="modalTitle">Notas</div>
+          <div class="modalSub" id="modalSub">—</div>
         </div>
-        <button class="btn btn-gray" id="closeModal">Fechar</button>
+        <div class="actions">
+          <button class="btn secondary" id="closeModal">Fechar</button>
+        </div>
       </div>
 
-      <div style="height:10px"></div>
-
-      <div class="grid" style="grid-template-columns:1fr 1fr 2fr;gap:10px">
+      <div class="split">
         <div>
-          <div class="label">Seu nome</div>
-          <input id="noteAuthor" placeholder="Ex.: João Silva"/>
+          <label>Seu nome</label>
+          <input id="noteAuthor" placeholder="Ex.: João Silva" />
         </div>
         <div>
-          <div class="label">Status da execução</div>
+          <label>Status da execução</label>
           <select id="noteStatus">
-            <option value="Executada">✅ Executada</option>
-            <option value="Houve problemas">⚠️ Houve problemas</option>
-            <option value="Não foi executada">❌ Não foi executada</option>
+            <option value="executada">✅ Executada</option>
+            <option value="problema">⚠️ Com problema</option>
+            <option value="nao_executada">⛔ Não executada</option>
           </select>
         </div>
-        <div>
-          <div class="label">Adicionar nota</div>
-          <textarea id="noteText" placeholder="Escreva a observação desta obra..."></textarea>
-        </div>
       </div>
 
-      <div style="display:flex;justify-content:flex-end;margin-top:10px">
-        <button class="btn btn-green" id="saveNote">Salvar nota</button>
+      <div style="margin-top:10px;">
+        <label>Adicionar nota</label>
+        <textarea id="noteText" placeholder="Escreva a observação desta obra..."></textarea>
       </div>
 
-      <div style="height:10px"></div>
-      <div id="notesList"></div>
+      <div class="actions" style="margin-top:10px;">
+        <button class="btn" id="saveNote">Salvar nota</button>
+      </div>
+
+      <div class="muted" id="notesHint" style="margin-top:10px;"></div>
+      <div class="noteList" id="noteList"></div>
     </div>
   </div>
 
-<script>
-/* ====== SUPABASE ====== */
-const SUPABASE_URL = "https://yyfhnuafwzeglwcpnmkd.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_7rmfNL9N6limSSFxFcl2Og_MV9xkbjx";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <script type="module">
+    // ========= CONFIGURE AQUI =========
+    const SUPABASE_URL = "COLE_SUA_SUPABASE_URL_AQUI";
+    const SUPABASE_ANON_KEY = "COLE_SUA_ANON_KEY_AQUI";
+    const TABLE_OBRAS = "obras";
+    const TABLE_NOTES = "notes";
+    // ==================================
 
-/* ====== UTIL ====== */
-const $ = (id)=>document.getElementById(id);
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function showErr(msg){ $("err").style.display="block"; $("err").textContent=String(msg); }
-function clearErr(){ $("err").style.display="none"; $("err").textContent=""; }
+    // --------- elementos ---------
+    const errBox = document.getElementById("err");
+    const basesEl = document.getElementById("bases");
+    const selDateLbl = document.getElementById("selDateLbl");
 
-function escapeHtml(s){
-  return String(s ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;");
-}
+    const filtersPanel = document.getElementById("filtersPanel");
+    const toggleFiltersBtn = document.getElementById("toggleFilters");
+    const clearFiltersBtn = document.getElementById("clearFilters");
+    const reloadBtn = document.getElementById("reload");
+    const exportWhatsBtn = document.getElementById("exportWhats");
 
-function normKey(k){
-  return String(k || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
-}
+    const fCriterio = document.getElementById("fCriterio");
+    const fAgente = document.getElementById("fAgente");
+    const fGerencia = document.getElementById("fGerencia");
+    const fStatus = document.getElementById("fStatus");
+    const fBusca = document.getElementById("fBusca");
 
-function pick(obj, keys){
-  for(const k of keys){
-    if(obj && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") return obj[k];
-  }
-  return "";
-}
+    const colsBox = document.getElementById("colsBox");
 
-function pickLoose(obj, wanted){
-  if(!obj) return "";
-  const target = normKey(wanted);
-  for (const k of Object.keys(obj)){
-    if (normKey(k) === target){
-      const v = obj[k];
-      if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+    // calendário
+    const calGrid = document.getElementById("calGrid");
+    const monthLbl = document.getElementById("monthLbl");
+    const prevMonthBtn = document.getElementById("prevMonth");
+    const nextMonthBtn = document.getElementById("nextMonth");
+
+    // modal
+    const modalOverlay = document.getElementById("modalOverlay");
+    const closeModalBtn = document.getElementById("closeModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSub = document.getElementById("modalSub");
+    const noteAuthor = document.getElementById("noteAuthor");
+    const noteStatus = document.getElementById("noteStatus");
+    const noteText = document.getElementById("noteText");
+    const saveNoteBtn = document.getElementById("saveNote");
+    const noteList = document.getElementById("noteList");
+    const notesHint = document.getElementById("notesHint");
+
+    // --------- helpers ---------
+    function showError(msg){
+      errBox.style.display = "block";
+      errBox.textContent = msg;
     }
-  }
-  return "";
-}
-
-function pickAnyLoose(obj, wantedList){
-  for(const w of wantedList){
-    const v = pickLoose(obj, w);
-    if(v) return v;
-  }
-  return "";
-}
-
-function parseAnyDate(v){
-  if(!v) return null;
-  const s = String(v).trim();
-  if(!s) return null;
-
-  const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if(m){
-    const [_, dd, mm, yyyy] = m;
-    return new Date(Number(yyyy), Number(mm)-1, Number(dd));
-  }
-  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m2){
-    const [_, yyyy, mm, dd] = m2;
-    return new Date(Number(yyyy), Number(mm)-1, Number(dd));
-  }
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
-function sameDay(a,b){
-  return a && b &&
-    a.getFullYear()===b.getFullYear() &&
-    a.getMonth()===b.getMonth() &&
-    a.getDate()===b.getDate();
-}
-function fmtBR(d){
-  if(!d) return "-";
-  const dd = String(d.getDate()).padStart(2,"0");
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
-}
-
-/* ====== STATUS ====== */
-function unpackStatus(texto){
-  const s = String(texto ?? "");
-  const m = s.match(/^\s*\[\[STATUS:(.+?)\]\]\s*\n?/);
-  if(m){
-    return { status: m[1].trim(), texto: s.replace(m[0], "").trim() };
-  }
-  return { status: "", texto: s };
-}
-function statusBadge(status){
-  const st = (status||"").toLowerCase();
-  if(st.includes("executada")) return `<span class="badge b-ok">✅ Executada</span>`;
-  if(st.includes("problema")) return `<span class="badge b-warn">⚠️ Problemas</span>`;
-  if(st.includes("não") || st.includes("nao")) return `<span class="badge b-bad">❌ Não executada</span>`;
-  return `<span class="badge b-none">ℹ️ Sem status</span>`;
-}
-
-/* ====== BASES FIXAS (CORRIGIDO) ====== */
-const BASES = ["Alagoinhas","Ribeira do Pombal","Paulo Afonso"];
-
-/* ====== STATE ====== */
-let ALL = [];
-let FILTERS = { criterio:"", municipio:"", ar:"", base:"" };
-let selectedDate = startOfDay(new Date());
-let viewMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-let showMoreCols = false;
-
-let LAST_STATUS_BY_NOTA = new Map();
-
-let currentNota = null;
-let currentMeta = null;
-
-let CURRENT_TODAY_ALL_BASES = [];
-
-/* ====== CALENDÁRIO ====== */
-const DOW = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
-
-function renderCalendar(){
-  $("calTitle").textContent = viewMonth.toLocaleDateString("pt-BR", { month:"long", year:"numeric" })
-    .replace(/^./, c=>c.toUpperCase());
-  $("calInfo").textContent = `Selecionado: ${fmtBR(selectedDate)}`;
-
-  $("calDow").innerHTML = DOW.map(d=>`<div class="calDow">${d}</div>`).join("");
-
-  const firstDay = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
-  const startIdx = firstDay.getDay();
-  const start = new Date(firstDay);
-  start.setDate(start.getDate() - startIdx);
-
-  const days = [];
-  for(let i=0;i<42;i++){
-    const d = new Date(start);
-    d.setDate(start.getDate()+i);
-
-    const inMonth = d.getMonth() === viewMonth.getMonth();
-    const isToday = sameDay(d, startOfDay(new Date()));
-    const isSel = sameDay(d, selectedDate);
-
-    days.push({ date:d, label:d.getDate(), inMonth, isToday, isSel });
-  }
-
-  $("calDays").innerHTML = days.map(x=>{
-    const cls = [
-      "day",
-      x.inMonth ? "" : "muted",
-      x.isToday ? "today" : "",
-      x.isSel ? "sel" : ""
-    ].filter(Boolean).join(" ");
-
-    const click = x.inMonth ? `onclick="selectDay('${x.date.toISOString()}')"` : "";
-    return `<div class="${cls}" ${click}>${x.label}</div>`;
-  }).join("");
-}
-
-function selectDay(iso){
-  const d = new Date(iso);
-  selectedDate = startOfDay(d);
-  renderCalendar();
-  render();
-}
-window.selectDay = selectDay;
-
-/* ====== DETECTA BASE ====== */
-function normalizeBaseLabel(b){
-  const s = String(b || "").trim();
-  const nk = normKey(s);
-
-  if(nk.includes("alagoinha")) return "Alagoinhas";
-  if(nk.includes("ribeiradopombal") || (nk.includes("pombal") && nk.includes("ribeira"))) return "Ribeira do Pombal";
-  if(nk.includes("pauloafonso") || (nk.includes("afonso") && nk.includes("paulo"))) return "Paulo Afonso";
-
-  // tenta match exato
-  for(const B of BASES){
-    if(normKey(B) === nk) return B;
-  }
-  return s;
-}
-
-function inferBaseFromText(o){
-  const blob = [
-    o.baseRaw, o.municipio, o.localidade, o.titulo, o.projeto
-  ].filter(Boolean).join(" ");
-  const nk = normKey(blob);
-
-  if(nk.includes("alagoinha")) return "Alagoinhas";
-  if(nk.includes("ribeiradopombal") || (nk.includes("pombal") && nk.includes("ribeira"))) return "Ribeira do Pombal";
-  if(nk.includes("pauloafonso") || (nk.includes("afonso") && nk.includes("paulo"))) return "Paulo Afonso";
-
-  return "";
-}
-
-function getBaseFromRow(o){
-  // tenta por nomes comuns de coluna
-  const baseRaw =
-    pick(o, ["BASE","base","Base"]) ||
-    pickAnyLoose(o, ["base", "base_operacional", "baseoperacional", "base operacional", "regional", "regiao", "região", "polo", "pólo", "subregional", "sub-regional", "sub regional"]) ||
-    "";
-
-  return baseRaw;
-}
-
-function normalizeObra(o){
-  const nota = pick(o, ["nota","NOTA"]) || pickLoose(o, "nota");
-  const titulo = pick(o, ["titulo","TITULO"]) || pickLoose(o, "titulo");
-
-  const projeto =
-    pick(o, ["projeto","PROJETO","Projeto","NOME_PROJETO","NOME DO PROJETO"]) ||
-    pickLoose(o, "projeto") ||
-    pickLoose(o, "nomeprojeto");
-
-  const criterio = pick(o, ["criterio","CRITERIO","criterio_","CRITERIO_"]) || pickLoose(o, "criterio");
-  const municipio = pick(o, ["municipio","MUNICIPIO"]) || pickLoose(o, "municipio");
-
-  const ar =
-    pick(o, ["agente_responsavel","AGENTE_RESPONSAVEL","AR","ar"]) ||
-    pickLoose(o, "agenteresponsavel") ||
-    pickLoose(o, "responsavel") ||
-    "";
-
-  const localidade = pick(o, ["localidade","LOCALIDADE"]) || pickLoose(o, "localidade");
-  const gerencia = pick(o, ["gerencia","GERENCIA"]) || pickLoose(o, "gerencia");
-
-  const fimRaw =
-    pick(o, ["previsao_execucao_fim","PREVISAO_EXECUCAO_FIM"]) ||
-    pickAnyLoose(o, ["previsaoexecucaofim","previsaofim","previsao_fim","prazo_final","prazofinal","fim"]) ||
-    "";
-
-  const dtFim = parseAnyDate(fimRaw);
-
-  const baseRaw = getBaseFromRow(o);
-  let base = normalizeBaseLabel(baseRaw);
-
-  // se não bateu nas 3 bases, tenta inferir pelo texto
-  if(!BASES.includes(base)){
-    const inferred = inferBaseFromText({ baseRaw, municipio, localidade, titulo, projeto });
-    if(inferred) base = inferred;
-  }
-
-  return { raw:o, nota, projeto, titulo, criterio, municipio, ar, localidade, gerencia, dtFim, base, baseRaw };
-}
-
-function uniqSorted(arr){
-  return Array.from(new Set(arr.filter(Boolean).map(x=>String(x).trim())))
-    .sort((a,b)=>a.localeCompare(b,"pt-BR"));
-}
-function fillSelect(sel, values, allLabel){
-  const cur = sel.value;
-  sel.innerHTML = "";
-  values.forEach(v=>{
-    const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v ? v : allLabel;
-    sel.appendChild(opt);
-  });
-  if(values.includes(cur)) sel.value = cur;
-}
-
-function buildFilterOptions(){
-  const norm = ALL.map(normalizeObra);
-
-  fillSelect($("fCriterio"), ["", ...uniqSorted(norm.map(x=>x.criterio))], "Todos");
-  fillSelect($("fMunicipio"), ["", ...uniqSorted(norm.map(x=>x.municipio))], "Todos");
-  fillSelect($("fAR"), ["", ...uniqSorted(norm.map(x=>x.ar))], "Todos");
-  fillSelect($("fBase"), ["", ...BASES], "Todas");
-}
-
-function applyFilters(list){
-  return list.filter(x=>{
-    if(FILTERS.criterio && String(x.criterio) !== FILTERS.criterio) return false;
-    if(FILTERS.municipio && String(x.municipio) !== FILTERS.municipio) return false;
-    if(FILTERS.ar && String(x.ar) !== FILTERS.ar) return false;
-    if(FILTERS.base && String(x.base) !== FILTERS.base) return false;
-    return true;
-  });
-}
-function applySearch(list){
-  const q = ($("q").value || "").trim().toLowerCase();
-  if(!q) return list;
-  return list.filter(x=>{
-    const a = `${x.nota||""} ${x.projeto||""} ${x.titulo||""} ${x.base||""}`.toLowerCase();
-    return a.includes(q);
-  });
-}
-
-async function hydrateLastStatus(notas){
-  LAST_STATUS_BY_NOTA = new Map();
-  const unique = Array.from(new Set((notas||[]).filter(Boolean).map(String)));
-  if(unique.length === 0) return;
-
-  const slice = unique.slice(0, 400);
-  const { data, error } = await sb
-    .from("notes")
-    .select("nota,texto,created_at")
-    .in("nota", slice)
-    .order("created_at", { ascending:false });
-
-  if(error || !data) return;
-
-  for(const n of data){
-    const key = String(n.nota);
-    if(!LAST_STATUS_BY_NOTA.has(key)){
-      const parsed = unpackStatus(n.texto);
-      LAST_STATUS_BY_NOTA.set(key, parsed.status || "");
+    function clearError(){
+      errBox.style.display = "none";
+      errBox.textContent = "";
     }
-  }
-}
-
-/* ====== FETCH ====== */
-async function fetchObras(){
-  clearErr();
-  $("subtitle").textContent = "Carregando obras...";
-  $("bases").innerHTML = `<div class="empty">Carregando...</div>`;
-
-  const { data, error } = await sb.from("obras").select("*").limit(5000);
-  if(error){
-    showErr("Erro ao carregar obras:\n" + JSON.stringify(error, null, 2));
-    $("bases").innerHTML = "";
-    $("subtitle").textContent = "Erro ao carregar.";
-    return;
-  }
-
-  ALL = data || [];
-  buildFilterOptions();
-  render();
-}
-
-/* ====== RENDER POR BASE ====== */
-async function render(){
-  const day = startOfDay(selectedDate);
-
-  let norm = applySearch(applyFilters(ALL.map(normalizeObra)));
-
-  // se alguma obra ficou sem base, ela não aparece. Mas agora a inferência cobre a maioria.
-  const byBase = new Map();
-  for(const B of BASES) byBase.set(B, []);
-  for(const o of norm){
-    if(BASES.includes(o.base)) byBase.get(o.base).push(o);
-  }
-
-  CURRENT_TODAY_ALL_BASES = [];
-  const cardsToHydrate = [];
-
-  const sections = [];
-
-  for(const B of BASES){
-    const arr = (byBase.get(B) || []).filter(x=>x.dtFim);
-
-    const todayList = arr
-      .filter(x => sameDay(startOfDay(x.dtFim), day))
-      .sort((a,b)=>a.dtFim - b.dtFim);
-
-    CURRENT_TODAY_ALL_BASES.push(...todayList);
-
-    let shown = todayList;
-    let label = `Do dia (${fmtBR(day)})`;
-
-    if(shown.length === 0){
-      const proximas = arr
-        .filter(x => startOfDay(x.dtFim) >= day)
-        .sort((a,b)=>a.dtFim - b.dtFim)
-        .slice(0, 5);
-
-      shown = proximas;
-      label = `Sem obras no dia. Mostrando as 5 mais próximas`;
+    const pad2 = (n)=> String(n).padStart(2,"0");
+    function fmtBR(d){
+      if(!(d instanceof Date)) return "-";
+      return `${pad2(d.getUTCDate())}/${pad2(d.getUTCMonth()+1)}/${d.getUTCFullYear()}`;
+    }
+    function fmtBRDateTime(iso){
+      if(!iso) return "";
+      const d = new Date(iso);
+      return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+    function startOfDayUTC(d){
+      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    }
+    function parseBRDateToUTC(v){
+      if(!v) return null;
+      if (typeof v === "string"){
+        const s = v.trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(s)){
+          const [y,m,d] = s.split("T")[0].split("-").map(Number);
+          return new Date(Date.UTC(y,m-1,d));
+        }
+        const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if(m){
+          const dd = Number(m[1]), mm = Number(m[2]), yy = Number(m[3]);
+          return new Date(Date.UTC(yy,mm-1,dd));
+        }
+      }
+      if (v instanceof Date){
+        return new Date(Date.UTC(v.getFullYear(), v.getMonth(), v.getDate()));
+      }
+      return null;
     }
 
-    cardsToHydrate.push(...shown.map(x=>x.nota));
-    sections.push({ base: B, label, shown });
-  }
-
-  $("subtitle").innerHTML =
-    `Selecionado: <b>${fmtBR(day)}</b> • Em cada base: obras do dia; se não tiver, <b>5 mais próximas</b>.<br/>
-     <span class="meta">WhatsApp envia <b>somente</b> as obras do dia (todas as bases).</span>`;
-
-  await hydrateLastStatus(cardsToHydrate);
-
-  const moreClass = showMoreCols ? "moreOn" : "";
-
-  $("bases").innerHTML = sections.map(sec=>{
-    const list = sec.shown;
-
-    const inner = (list.length === 0)
-      ? `<div class="empty">Sem obras nessa base (com filtros/busca atuais).</div>`
-      : list.map(o=>{
-          const prazo = o.dtFim ? fmtBR(o.dtFim) : "-";
-          const lastSt = LAST_STATUS_BY_NOTA.get(String(o.nota)) || "";
-          return `
-            <div class="card ${moreClass}">
-              <div class="row">
-                <div>
-                  <div class="title">${escapeHtml(o.titulo || "(Sem título)")}</div>
-                  <div class="meta">${escapeHtml(o.criterio || "")} • ${escapeHtml(o.municipio || "")}</div>
-                </div>
-                <div class="topRight">
-                  ${statusBadge(lastSt)}
-                  <button class="btn btn-gray" onclick="openNotes('${escapeHtml(String(o.nota))}')">Notas</button>
-                </div>
-              </div>
-
-              <div class="kvs">
-                <div class="kv"><b>NOTA</b><span>${escapeHtml(o.nota || "-")}</span></div>
-                <div class="kv"><b>PROJETO</b><span>${escapeHtml(o.projeto || "-")}</span></div>
-                <div class="kv"><b>PRAZO FINAL</b><span>${escapeHtml(prazo)}</span></div>
-                <div class="kv"><b>AR</b><span>${escapeHtml(o.ar || "-")}</span></div>
-              </div>
-
-              <div class="kvs moreCols">
-                <div class="kv"><b>LOCALIDADE</b><span>${escapeHtml(o.localidade || "-")}</span></div>
-                <div class="kv"><b>GERÊNCIA</b><span>${escapeHtml(o.gerencia || "-")}</span></div>
-              </div>
-            </div>
-          `;
-        }).join("");
-
-    return `
-      <div class="baseCol">
-        <div class="baseHead">
-          <div>
-            <div class="baseTitle">${escapeHtml(sec.base)}</div>
-            <div class="baseMeta">${escapeHtml(sec.label)}</div>
-          </div>
-          <div class="baseMeta">Qtd: <b>${list.length}</b></div>
-        </div>
-        ${inner}
-      </div>
-    `;
-  }).join("");
-}
-
-/* ====== WHATSAPP ====== */
-function buildWhatsAppMessage(){
-  const d = startOfDay(selectedDate);
-  const dataStr = fmtBR(d);
-
-  if(!CURRENT_TODAY_ALL_BASES || CURRENT_TODAY_ALL_BASES.length === 0){
-    return `📌 Acompanhamento UTEP\n\nNenhuma obra com prazo final em *${dataStr}* (de acordo com filtros/busca).`;
-  }
-
-  const map = new Map();
-  for(const B of BASES) map.set(B, []);
-  for(const o of CURRENT_TODAY_ALL_BASES){
-    const b = BASES.includes(o.base) ? o.base : "Outros";
-    if(!map.has(b)) map.set(b, []);
-    map.get(b).push(o);
-  }
-
-  let out = `📌 *Acompanhamento UTEP — Obras do dia*\n📅 *${dataStr}*\n\n`;
-
-  for(const B of BASES){
-    const arr = (map.get(B) || []);
-    if(arr.length === 0) continue;
-
-    out += `*${B}* (${arr.length})\n`;
-    arr.forEach((o, i)=>{
-      const prazo = o.dtFim ? fmtBR(o.dtFim) : "-";
-      out += `• ${i+1}) Nota: ${o.nota || "-"} | Projeto: ${o.projeto || "-"}\n  Título: ${o.titulo || "-"}\n  Município: ${o.municipio || "-"} | AR: ${o.ar || "-"} | Prazo: ${prazo}\n`;
-    });
-    out += "\n";
-  }
-
-  return out.trim();
-}
-
-function exportWhatsAppToday(){
-  const msg = buildWhatsAppMessage();
-  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
-}
-
-/* ====== CSV ====== */
-function exportCsv(){
-  const d = startOfDay(selectedDate);
-  let norm = applySearch(applyFilters(ALL.map(normalizeObra)));
-
-  const rows = [];
-  for(const B of BASES){
-    const arr = norm.filter(x => x.base === B && x.dtFim);
-
-    const todayList = arr
-      .filter(x => sameDay(startOfDay(x.dtFim), d))
-      .sort((a,b)=>a.dtFim - b.dtFim);
-
-    let shown = todayList;
-    if(shown.length === 0){
-      shown = arr
-        .filter(x => startOfDay(x.dtFim) >= d)
-        .sort((a,b)=>a.dtFim - b.dtFim)
-        .slice(0, 5);
+    function pick(o, keys){
+      for (const k of keys){
+        if (o && o[k] !== undefined && o[k] !== null && String(o[k]).trim() !== "") return o[k];
+      }
+      return null;
+    }
+    function pickLoose(o, contains){
+      const low = contains.toLowerCase();
+      for (const k of Object.keys(o||{})){
+        if (k.toLowerCase().includes(low)){
+          const v = o[k];
+          if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+        }
+      }
+      return null;
+    }
+    function uniqSorted(arr){
+      const s = [...new Set(arr.filter(x=>x && String(x).trim() !== "-" && String(x).trim() !== ""))];
+      s.sort((a,b)=> String(a).localeCompare(String(b)));
+      return s;
     }
 
-    for(const x of shown){
-      rows.push({
-        BASE: x.base || "",
-        NOTA: x.nota || "",
-        PROJETO: x.projeto || "",
-        TITULO: x.titulo || "",
-        CRITERIO: x.criterio || "",
-        MUNICIPIO: x.municipio || "",
-        AR: x.ar || "",
-        PRAZO_FINAL: x.dtFim ? fmtBR(x.dtFim) : "",
-        LOCALIDADE: x.localidade || "",
-        GERENCIA: x.gerencia || ""
+    // --------- Colunas extras (liga/desliga) ---------
+    const EXTRA_COLS = [
+      { key:"base_oper_prog", label:"BASE_OPER_PROG" },
+      { key:"status_si", label:"STATUS_SI" },
+      { key:"st_carteira", label:"ST_CARTEIRA" },
+      { key:"prioridade_principal", label:"PRIORIDADE_PRINCIPAL" },
+      { key:"prioridade_todas", label:"PRIORIDADE_TODAS" },
+      { key:"vl_projeto", label:"VL_PROJETO" },
+      { key:"vl_prev_unit", label:"VL_PREV_UNIT" },
+      { key:"data_revisao_orcamento", label:"DATA_REVISAO_ORCAMENTO" },
+      { key:"status_revisao_orcamento", label:"STATUS_REVISAO_ORCAMENTO" },
+      { key:"estratificacao", label:"ESTRATIFICACAO" },
+      { key:"estratificacao_matriz", label:"ESTRATIFICACAO_MATRIZ" },
+      { key:"status_prazo_cart", label:"STATUS_PRAZO_CART" },
+      { key:"obras_ouro", label:"OBRAS_OURO" }
+    ];
+
+    let selectedExtras = new Set(JSON.parse(localStorage.getItem("extras_cols") || "[]"));
+
+    function renderColsChooser(){
+      colsBox.innerHTML = "";
+      EXTRA_COLS.forEach(c=>{
+        const wrap = document.createElement("div");
+        wrap.className = "colItem";
+        wrap.innerHTML = `
+          <input type="checkbox" ${selectedExtras.has(c.key) ? "checked": ""} />
+          <div style="font-weight:900;">${escapeHtml(c.label)}</div>
+        `;
+        const chk = wrap.querySelector("input");
+        chk.addEventListener("change", ()=>{
+          if(chk.checked) selectedExtras.add(c.key);
+          else selectedExtras.delete(c.key);
+          localStorage.setItem("extras_cols", JSON.stringify([...selectedExtras]));
+          renderBases();
+        });
+        colsBox.appendChild(wrap);
       });
     }
-  }
 
-  if(rows.length === 0){
-    alert("Nada para exportar.");
-    return;
-  }
+    // --------- State ---------
+    const state = {
+      obrasAll: [],
+      obrasFiltered: [],
+      selectedUTC: null,
+      monthCursor: null,
+      filters: { criterio:"ALL", agente:"ALL", gerencia:"ALL", status:"ALL", busca:"" }
+    };
 
-  const headers = Object.keys(rows[0]);
-  const esc = (v)=> `"${String(v ?? "").replaceAll('"','""')}"`;
-  const csv = [
-    headers.join(";"),
-    ...rows.map(r=>headers.map(h=>esc(r[h])).join(";"))
-  ].join("\n");
+    // --------- Base (Alagoinhas / Ribeira / Paulo Afonso) ---------
+    function normBaseName(v){
+      const t = String(v||"").toUpperCase().trim();
+      if (!t) return "";
+      if (t.includes("ALAGOIN")) return "Alagoinhas";
+      if (t.includes("RIBEIRA") || t.includes("POMBAL")) return "Ribeira do Pombal";
+      if (t.includes("PAULO") && t.includes("AFONSO")) return "Paulo Afonso";
+      return "";
+    }
+    function inferBaseFromText(txt){
+      return normBaseName(txt);
+    }
 
-  const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+    // --------- Normalização da obra ---------
+    function normalizeObra(o){
+      const nota = String(pick(o, ["nota","NOTA","Nota"]) ?? "").trim() || null;
+      const titulo = String(pick(o, ["titulo","TITULO","Titulo"]) ?? "").trim() || "-";
+      const projeto = String(pick(o, ["projeto","PROJETO","Projeto"]) ?? pickLoose(o,"projeto") ?? "").trim() || "-";
+      const municipio = String(pick(o, ["municipio","MUNICIPIO","Municipio"]) ?? "").trim() || "-";
+      const criterio = String(pick(o, ["criterio","CRITERIO","Criterio"]) ?? "").trim() || "-";
+      const agente = String(pick(o, ["agente_responsavel","AGENTE_RESPONSAVEL"]) ?? pickLoose(o,"agente") ?? "").trim() || "-";
+      const gerencia = String(pick(o, ["gerencia","GERENCIA"]) ?? "").trim() || "-";
+      const status = String(pick(o, ["status","STATUS"]) ?? "").trim() || "-";
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `acompanhamento_bases_${Date.now()}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
+      const fimRaw = pick(o, ["previsao_execucao_fim","PREVISAO_EXECUCAO_FIM"]);
+      const fim = parseBRDateToUTC(fimRaw);
 
-/* ====== NOTAS ====== */
-async function openNotes(nota){
-  currentNota = String(nota);
+      // Base oficial (se existir): BASE_OPER_PROG
+      const base_oper_prog = String(pick(o, ["base_oper_prog","BASE_OPER_PROG"]) ?? "").trim() || "-";
+      let base = normBaseName(base_oper_prog);
+      if(!base){
+        // tenta localidade/municipio
+        const localidade = String(pick(o, ["localidade","LOCALIDADE"]) ?? "").trim();
+        base = inferBaseFromText(localidade || municipio) || "Outros";
+      }
 
-  $("modalBack").classList.add("on");
-  $("notesList").innerHTML = `<div class="meta">Carregando notas...</div>`;
-  $("noteText").value = "";
+      // Extras (só guardamos no objeto para exibir quando selecionado)
+      const status_si = String(pick(o, ["status_si","STATUS_SI"]) ?? "").trim() || "-";
+      const st_carteira = String(pick(o, ["st_carteira","ST_CARTEIRA"]) ?? "").trim() || "-";
+      const prioridade_principal = String(pick(o, ["prioridade_principal","PRIORIDADE_PRINCIPAL"]) ?? "").trim() || "-";
+      const prioridade_todas = String(pick(o, ["prioridade_todas","PRIORIDADE_TODAS"]) ?? "").trim() || "-";
+      const vl_projeto = String(pick(o, ["vl_projeto","VL_PROJETO"]) ?? "").trim() || "-";
+      const vl_prev_unit = String(pick(o, ["vl_prev_unit","VL_PREV_UNIT"]) ?? "").trim() || "-";
+      const data_revisao_orcamento = String(pick(o, ["data_revisao_orcamento","DATA_REVISAO_ORCAMENTO"]) ?? "").trim() || "-";
+      const status_revisao_orcamento = String(pick(o, ["status_revisao_orcamento","STATUS_REVISAO_ORCAMENTO"]) ?? "").trim() || "-";
+      const estratificacao = String(pick(o, ["estratificacao","ESTRATIFICACAO"]) ?? "").trim() || "-";
+      const estratificacao_matriz = String(pick(o, ["estratificacao_matriz","ESTRATIFICACAO_MATRIZ"]) ?? "").trim() || "-";
+      const status_prazo_cart = String(pick(o, ["status_prazo_cart","STATUS_PRAZO_CART"]) ?? "").trim() || "-";
+      const obras_ouro = String(pick(o, ["obras_ouro","OBRAS_OURO"]) ?? "").trim() || "-";
 
-  const found = ALL.map(normalizeObra).find(x=>String(x.nota) === currentNota);
-  currentMeta = found || null;
+      return {
+        raw:o,
+        nota, titulo, projeto, municipio, criterio, agente, gerencia, status,
+        fim, base,
+        // extras (keys iguais ao EXTRA_COLS)
+        base_oper_prog, status_si, st_carteira, prioridade_principal, prioridade_todas,
+        vl_projeto, vl_prev_unit, data_revisao_orcamento, status_revisao_orcamento,
+        estratificacao, estratificacao_matriz, status_prazo_cart, obras_ouro
+      };
+    }
 
-  $("modalTitle").textContent = `Notas - Nota ${currentNota}`;
-  $("modalMeta").innerHTML = currentMeta
-    ? `${escapeHtml(currentMeta.titulo || "")} • ${escapeHtml(currentMeta.municipio || "")} • ${escapeHtml(currentMeta.base || "")}`
-    : "";
+    // --------- UI events ---------
+    toggleFiltersBtn.addEventListener("click", ()=>{
+      const open = filtersPanel.style.display !== "none";
+      filtersPanel.style.display = open ? "none" : "block";
+      toggleFiltersBtn.textContent = open ? "Mostrar filtros" : "Ocultar filtros";
+    });
 
-  await loadNotes();
-}
-function closeNotes(){
-  $("modalBack").classList.remove("on");
-  currentNota = null;
-  currentMeta = null;
-}
+    clearFiltersBtn.addEventListener("click", ()=>{
+      state.filters = { criterio:"ALL", agente:"ALL", gerencia:"ALL", status:"ALL", busca:"" };
+      fCriterio.value = "ALL";
+      fAgente.value = "ALL";
+      fGerencia.value = "ALL";
+      fStatus.value = "ALL";
+      fBusca.value = "";
+      applyAll();
+    });
 
-async function loadNotes(){
-  if(!currentNota) return;
+    reloadBtn.addEventListener("click", async ()=>{
+      await loadObras();
+      applyAll();
+    });
 
-  const { data, error } = await sb
-    .from("notes")
-    .select("id,nota,autor,texto,created_at")
-    .eq("nota", currentNota)
-    .order("created_at", { ascending:false });
+    function onFilterChange(){
+      state.filters.criterio = fCriterio.value;
+      state.filters.agente = fAgente.value;
+      state.filters.gerencia = fGerencia.value;
+      state.filters.status = fStatus.value;
+      state.filters.busca = (fBusca.value || "").trim().toLowerCase();
+      applyAll();
+    }
+    [fCriterio,fAgente,fGerencia,fStatus].forEach(el=> el.addEventListener("change", onFilterChange));
+    fBusca.addEventListener("input", onFilterChange);
 
-  if(error){
-    $("notesList").innerHTML = `<div class="meta">Erro ao carregar notas:<br>${escapeHtml(JSON.stringify(error))}</div>`;
-    return;
-  }
+    exportWhatsBtn.addEventListener("click", ()=>{
+      const sel = state.selectedUTC;
+      if(!sel){ alert("Selecione uma data no calendário."); return; }
 
-  if(!data || data.length === 0){
-    $("notesList").innerHTML = `<div class="meta">Sem notas ainda.</div>`;
-    return;
-  }
+      const list = getListForSelectedDayOnly();
+      if(!list.length){
+        alert("Não há obras com prazo final para a data selecionada.");
+        return;
+      }
+      const msg = buildWhatsAppMessage(sel, list);
+      window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+    });
 
-  $("notesList").innerHTML = data.map(n=>{
-    const dt = n.created_at ? new Date(n.created_at).toLocaleString("pt-BR") : "-";
-    const parsed = unpackStatus(n.texto);
-    return `
-      <div class="noteItem">
-        <div class="noteTop">
-          <div><b>${escapeHtml(n.autor || "(sem autor)")}</b></div>
-          <div>${escapeHtml(dt)}</div>
+    // --------- Calendar ---------
+    prevMonthBtn.addEventListener("click", ()=>{
+      const d = new Date(state.monthCursor);
+      d.setUTCMonth(d.getUTCMonth()-1);
+      state.monthCursor = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+      renderCalendar();
+    });
+    nextMonthBtn.addEventListener("click", ()=>{
+      const d = new Date(state.monthCursor);
+      d.setUTCMonth(d.getUTCMonth()+1);
+      state.monthCursor = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+      renderCalendar();
+    });
+
+    function renderCalendar(){
+      const cursor = state.monthCursor;
+      const monthNames = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+      monthLbl.textContent = `${monthNames[cursor.getUTCMonth()]} ${cursor.getUTCFullYear()}`;
+
+      calGrid.innerHTML = "";
+      const dows = ["D","S","T","Q","Q","S","S"];
+      dows.forEach(x=>{
+        const el = document.createElement("div");
+        el.className = "dow";
+        el.textContent = x;
+        calGrid.appendChild(el);
+      });
+
+      const first = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), 1));
+      const last = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth()+1, 0));
+      const firstDow = first.getUTCDay();
+      const daysInMonth = last.getUTCDate();
+
+      const prevLast = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), 0));
+      const prevDays = prevLast.getUTCDate();
+
+      const today = startOfDayUTC(new Date());
+
+      for(let i=0;i<42;i++){
+        const dayIndex = i - firstDow + 1;
+        let dateUTC, label, muted=false;
+
+        if(dayIndex <= 0){
+          const dd = prevDays + dayIndex;
+          dateUTC = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth()-1, dd));
+          label = dd;
+          muted=true;
+        }else if(dayIndex > daysInMonth){
+          const dd = dayIndex - daysInMonth;
+          dateUTC = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth()+1, dd));
+          label = dd;
+          muted=true;
+        }else{
+          dateUTC = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), dayIndex));
+          label = dayIndex;
+        }
+
+        const cell = document.createElement("div");
+        cell.className = "day";
+        if(muted) cell.classList.add("mutedDay");
+        if(dateUTC.getTime() === today.getTime()) cell.classList.add("today");
+        if(state.selectedUTC && dateUTC.getTime() === state.selectedUTC.getTime()) cell.classList.add("selected");
+        cell.textContent = label;
+
+        cell.addEventListener("click", ()=>{
+          state.selectedUTC = dateUTC;
+          if(muted){
+            state.monthCursor = new Date(Date.UTC(dateUTC.getUTCFullYear(), dateUTC.getUTCMonth(), 1));
+          }
+          selDateLbl.textContent = fmtBR(state.selectedUTC);
+          renderCalendar();
+          applyAll();
+        });
+
+        calGrid.appendChild(cell);
+      }
+    }
+
+    // --------- Load obras ---------
+    async function loadObras(){
+      clearError();
+
+      if (!SUPABASE_URL.includes("http") || SUPABASE_ANON_KEY.includes("COLE_")) {
+        showError("⚠️ Configure SUPABASE_URL e SUPABASE_ANON_KEY no topo do index.html.");
+        return;
+      }
+
+      try{
+        const { data, error } = await supabase
+          .from(TABLE_OBRAS)
+          .select("*")
+          .limit(10000);
+
+        if(error) throw error;
+
+        state.obrasAll = (data || []).map(normalizeObra);
+
+        // filtros
+        const criterios = uniqSorted(state.obrasAll.map(o=>o.criterio));
+        const agentes = uniqSorted(state.obrasAll.map(o=>o.agente));
+        const gerencias = uniqSorted(state.obrasAll.map(o=>o.gerencia));
+        const statuses = uniqSorted(state.obrasAll.map(o=>o.status));
+
+        fillSelect(fCriterio, ["ALL", ...criterios], "ALL", "Todos");
+        fillSelect(fAgente, ["ALL", ...agentes], "ALL", "Todos");
+        fillSelect(fGerencia, ["ALL", ...gerencias], "ALL", "Todos");
+        fillSelect(fStatus, ["ALL", ...statuses], "ALL", "Todos");
+
+      }catch(e){
+        showError("Erro ao carregar obras. Verifique internet e RLS/policies no Supabase. Detalhe: " + (e?.message || String(e)));
+      }
+    }
+
+    function fillSelect(sel, values, selected, labelAll){
+      sel.innerHTML = "";
+      values.forEach(v=>{
+        const op = document.createElement("option");
+        op.value = v;
+        op.textContent = v === "ALL" ? labelAll : v;
+        sel.appendChild(op);
+      });
+      sel.value = selected;
+    }
+
+    // --------- Filter + render ---------
+    function applyAll(){
+      let arr = state.obrasAll.slice();
+      const F = state.filters;
+
+      if(F.criterio !== "ALL") arr = arr.filter(o=> o.criterio === F.criterio);
+      if(F.agente !== "ALL") arr = arr.filter(o=> o.agente === F.agente);
+      if(F.gerencia !== "ALL") arr = arr.filter(o=> o.gerencia === F.gerencia);
+      if(F.status !== "ALL") arr = arr.filter(o=> o.status === F.status);
+
+      if(F.busca){
+        arr = arr.filter(o=>{
+          const hay = `${o.nota||""} ${o.titulo||""} ${o.municipio||""} ${o.projeto||""} ${o.criterio||""}`.toLowerCase();
+          return hay.includes(F.busca);
+        });
+      }
+
+      state.obrasFiltered = arr;
+      renderBases();
+    }
+
+    function inRange(d, a, b){
+      return d && d.getTime() >= a.getTime() && d.getTime() <= b.getTime();
+    }
+
+    // regra: se tem obras no dia, mostra elas; senão, próximas até 5 dias
+    function selectForDate(obras, selectedUTC){
+      const target = selectedUTC;
+      const next5 = new Date(target);
+      next5.setUTCDate(next5.getUTCDate() + 5);
+
+      const sameDay = obras.filter(o=> o.fim && o.fim.getTime() === target.getTime());
+      if(sameDay.length) return { mode:"today", list: sameDay };
+
+      const upcoming = obras
+        .map(o=>({ o, fim: o.fim }))
+        .filter(x=> inRange(x.fim, target, next5))
+        .sort((a,b)=> a.fim - b.fim)
+        .map(x=>x.o);
+
+      return { mode:"upcoming", list: upcoming };
+    }
+
+    function statusTag(txt){
+      const t = (txt||"").toLowerCase();
+      if (t.includes("aprov") || t.includes("ok")) return "ok";
+      if (t.includes("pend") || t.includes("aguard") || t.includes("anal")) return "warn";
+      if (t.includes("cancel") || t.includes("reprov")) return "bad";
+      return "";
+    }
+
+    function renderBases(){
+      const sel = state.selectedUTC;
+      if(!sel){
+        basesEl.innerHTML = `<div class="panel"><b>Selecione um dia no calendário.</b></div>`;
+        return;
+      }
+
+      const bases = ["Alagoinhas", "Ribeira do Pombal", "Paulo Afonso"];
+      const byBase = new Map(bases.map(b=>[b, []]));
+      for(const o of state.obrasFiltered){
+        if(byBase.has(o.base)) byBase.get(o.base).push(o);
+      }
+
+      basesEl.innerHTML = "";
+
+      bases.forEach(baseName=>{
+        const arr = byBase.get(baseName) || [];
+        const pickRes = selectForDate(arr, sel);
+
+        const block = document.createElement("div");
+        block.className = "baseBlock";
+
+        const countText = pickRes.mode === "today"
+          ? `${pickRes.list.length} do dia`
+          : `${pickRes.list.length} próximas (até 5 dias)`;
+
+        block.innerHTML = `
+          <div class="baseHeader">
+            <div class="baseTitle">${escapeHtml(baseName)}</div>
+            <div class="count">${escapeHtml(countText)}</div>
+          </div>
+          <div class="cards"></div>
+        `;
+
+        const cards = block.querySelector(".cards");
+        if(!pickRes.list.length){
+          const empty = document.createElement("div");
+          empty.className = "muted";
+          empty.textContent = "Sem obras para o dia e sem próximas dentro de 5 dias com os filtros atuais.";
+          cards.appendChild(empty);
+        }else{
+          pickRes.list.forEach(o=> cards.appendChild(renderCard(o)));
+        }
+
+        basesEl.appendChild(block);
+      });
+    }
+
+    function renderCard(o){
+      const el = document.createElement("div");
+      el.className = "card";
+
+      const fimLbl = o.fim ? fmtBR(o.fim) : "-";
+      const stClass = statusTag(o.status);
+
+      const extrasHtml = EXTRA_COLS
+        .filter(c => selectedExtras.has(c.key))
+        .map(c => `<span class="tag">${escapeHtml(c.label)}: ${escapeHtml(o[c.key] ?? "-")}</span>`)
+        .join("");
+
+      el.innerHTML = `
+        <div class="cardTop">
+          <div>
+            <div class="title">${escapeHtml(o.titulo || "-")}</div>
+            <div class="meta">
+              <span class="tag">NOTA: ${escapeHtml(o.nota || "-")}</span>
+              <span class="tag">PROJETO: ${escapeHtml(o.projeto || "-")}</span>
+              <span class="tag">MUNICÍPIO: ${escapeHtml(o.municipio || "-")}</span>
+              <span class="tag">FIM: ${escapeHtml(fimLbl)}</span>
+              <span class="tag">CRITÉRIO: ${escapeHtml(o.criterio || "-")}</span>
+              <span class="tag ${stClass}">STATUS: ${escapeHtml(o.status || "-")}</span>
+              ${extrasHtml}
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary small">Notas</button>
+          </div>
         </div>
-        <div style="margin-top:8px">${statusBadge(parsed.status)}</div>
-        <div class="noteText">${escapeHtml(parsed.texto || "")}</div>
-      </div>
-    `;
-  }).join("");
-}
+      `;
 
-async function saveNote(){
-  if(!currentNota) return;
+      el.querySelector("button").addEventListener("click", ()=> openNotes(o));
+      return el;
+    }
 
-  const autor = $("noteAuthor").value.trim();
-  const texto = $("noteText").value.trim();
-  const status = $("noteStatus").value;
+    // --------- WhatsApp (somente do dia) ---------
+    function getListForSelectedDayOnly(){
+      const sel = state.selectedUTC;
+      return state.obrasFiltered
+        .filter(o => o.fim && o.fim.getTime() === sel.getTime())
+        .filter(o => ["Alagoinhas","Ribeira do Pombal","Paulo Afonso"].includes(o.base))
+        .sort((a,b)=> a.base.localeCompare(b.base) || String(a.nota||"").localeCompare(String(b.nota||"")));
+    }
 
-  if(!autor || !texto){
-    showErr("Preencha seu nome e a anotação antes de salvar.");
-    return;
-  }
-  clearErr();
+    function buildWhatsAppMessage(selectedUTC, list){
+      const dateLbl = fmtBR(selectedUTC);
 
-  const textoFinal = `[[STATUS:${status}]]\n${texto}`;
+      const byBase = new Map([
+        ["Alagoinhas", []],
+        ["Ribeira do Pombal", []],
+        ["Paulo Afonso", []],
+      ]);
+      list.forEach(o=> byBase.get(o.base).push(o));
 
-  const { error } = await sb.from("notes").insert({
-    nota: currentNota,
-    autor,
-    texto: textoFinal
-  });
+      let msg = `📌 UTEP Nordeste — Obras com prazo FINAL hoje (${dateLbl})\n`;
 
-  if(error){
-    showErr("Erro ao salvar nota:\n" + JSON.stringify(error, null, 2));
-    return;
-  }
+      for(const [baseName, arr] of byBase.entries()){
+        msg += `\n🏷️ ${baseName}\n`;
+        if(!arr.length){ msg += `• (nenhuma)\n`; continue; }
+        arr.forEach(o=>{
+          msg += `• Nota ${o.nota || "-"} | Projeto ${o.projeto || "-"} | ${o.municipio || "-"} | ${o.titulo || "-"}\n`;
+        });
+      }
+      msg += `\n(gerado automaticamente pelo dashboard)`;
+      return msg;
+    }
 
-  $("noteText").value = "";
-  await loadNotes();
-  await render();
-}
+    // --------- Notes (Supabase) ---------
+    let currentNotaForNotes = null;
+    let currentObraForNotes = null;
 
-/* ====== EVENTOS UI ====== */
-$("toggleFilters").addEventListener("click", ()=>{
-  const box = $("filters");
-  box.classList.toggle("on");
-  $("toggleFilters").textContent = box.classList.contains("on") ? "Ocultar filtros" : "Mostrar filtros";
-});
+    closeModalBtn.addEventListener("click", ()=> closeModal());
+    modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeModal(); });
 
-$("clearFilters").addEventListener("click", ()=>{
-  FILTERS = { criterio:"", municipio:"", ar:"", base:"" };
-  $("fCriterio").value = "";
-  $("fMunicipio").value = "";
-  $("fAR").value = "";
-  $("fBase").value = "";
-  render();
-});
+    function closeModal(){
+      modalOverlay.style.display = "none";
+      currentNotaForNotes = null;
+      currentObraForNotes = null;
+    }
 
-$("toggleCols").addEventListener("click", ()=>{
-  showMoreCols = !showMoreCols;
-  $("toggleCols").textContent = showMoreCols ? "Ocultar colunas extras" : "Mostrar mais colunas";
-  render();
-});
+    async function openNotes(obra){
+      clearError();
+      currentObraForNotes = obra;
+      currentNotaForNotes = obra.nota;
 
-$("reload").addEventListener("click", fetchObras);
-$("exportCsv").addEventListener("click", exportCsv);
-$("waToday").addEventListener("click", exportWhatsAppToday);
+      modalTitle.textContent = `Notas — NOTA ${obra.nota || "-"}`;
+      modalSub.textContent = `${obra.projeto || "-"} • ${obra.municipio || "-"} • ${obra.criterio || "-"}`;
 
-$("fCriterio").addEventListener("change", (e)=>{ FILTERS.criterio = e.target.value; render(); });
-$("fMunicipio").addEventListener("change", (e)=>{ FILTERS.municipio = e.target.value; render(); });
-$("fAR").addEventListener("change", (e)=>{ FILTERS.ar = e.target.value; render(); });
-$("fBase").addEventListener("change", (e)=>{ FILTERS.base = e.target.value; render(); });
+      notesHint.textContent = "";
+      noteText.value = "";
+      noteStatus.value = "executada";
+      noteList.innerHTML = `<div class="muted">Carregando...</div>`;
+      modalOverlay.style.display = "flex";
 
-$("q").addEventListener("input", ()=>{
-  window.clearTimeout(window.__tq);
-  window.__tq = window.setTimeout(()=>render(), 150);
-});
+      if(!obra.nota){
+        notesHint.textContent = "⚠️ Esta obra não tem NOTA preenchida, então não dá para vincular notas.";
+        noteList.innerHTML = "";
+        return;
+      }
+      await loadNotes(obra.nota);
+    }
 
-$("closeModal").addEventListener("click", closeNotes);
-$("modalBack").addEventListener("click", (e)=>{ if(e.target.id==="modalBack") closeNotes(); });
-$("saveNote").addEventListener("click", saveNote);
+    saveNoteBtn.addEventListener("click", async ()=>{
+      const author = (noteAuthor.value || "").trim();
+      const txt = (noteText.value || "").trim();
+      const st = noteStatus.value;
 
-$("prevMonth").addEventListener("click", ()=>{
-  viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth()-1, 1);
-  renderCalendar();
-});
-$("nextMonth").addEventListener("click", ()=>{
-  viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth()+1, 1);
-  renderCalendar();
-});
-$("todayBtn").addEventListener("click", ()=>{
-  selectedDate = startOfDay(new Date());
-  viewMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-  renderCalendar();
-  render();
-});
+      if(!currentNotaForNotes){ alert("Não encontrei a NOTA desta obra."); return; }
+      if(!author){ alert("Informe seu nome."); return; }
+      if(!txt){ alert("Escreva a anotação."); return; }
 
-window.openNotes = openNotes;
+      try{
+        saveNoteBtn.disabled = true;
+        saveNoteBtn.textContent = "Salvando...";
 
-/* INIT */
-(function init(){
-  $("bases").innerHTML = BASES.map(b=>`
-    <div class="baseCol">
-      <div class="baseHead">
-        <div>
-          <div class="baseTitle">${escapeHtml(b)}</div>
-          <div class="baseMeta">Carregando...</div>
-        </div>
-      </div>
-      <div class="empty">Aguardando dados...</div>
-    </div>
-  `).join("");
+        const payload = { nota: currentNotaForNotes, author, note: txt, status: st };
+        const { error } = await supabase.from(TABLE_NOTES).insert(payload);
+        if(error) throw error;
 
-  renderCalendar();
-  fetchObras();
-})();
-</script>
+        noteText.value = "";
+        await loadNotes(currentNotaForNotes);
+      }catch(e){
+        showError("Erro ao salvar nota: " + (e?.message || String(e)));
+      }finally{
+        saveNoteBtn.disabled = false;
+        saveNoteBtn.textContent = "Salvar nota";
+      }
+    });
 
+    async function loadNotes(nota){
+      try{
+        const { data, error } = await supabase
+          .from(TABLE_NOTES)
+          .select("*")
+          .eq("nota", nota)
+          .order("created_at", { ascending:false })
+          .limit(200);
+
+        if(error) throw error;
+
+        if(!data || !data.length){
+          noteList.innerHTML = `<div class="muted">Sem anotações ainda.</div>`;
+          return;
+        }
+
+        noteList.innerHTML = "";
+        data.forEach(n=>{
+          const st = (n.status || "").toLowerCase();
+          const tagClass =
+            st === "executada" ? "ok" :
+            st === "problema" ? "warn" :
+            st === "nao_executada" ? "bad" : "";
+
+          const stLbl =
+            st === "executada" ? "✅ Executada" :
+            st === "problema" ? "⚠️ Com problema" :
+            st === "nao_executada" ? "⛔ Não executada" :
+            (n.status || "-");
+
+          const div = document.createElement("div");
+          div.className = "noteItem";
+          div.innerHTML = `
+            <div class="noteTop">
+              <div><b>${escapeHtml(n.author || "—")}</b> • ${escapeHtml(fmtBRDateTime(n.created_at) || "")}</div>
+              <div class="tag ${tagClass}">${escapeHtml(stLbl)}</div>
+            </div>
+            <div class="noteTxt">${escapeHtml(n.note || "")}</div>
+          `;
+          noteList.appendChild(div);
+        });
+
+      }catch(e){
+        showError("Erro ao carregar notas: " + (e?.message || String(e)));
+        notesHint.textContent = "Verifique as policies (SELECT/INSERT) na tabela notes.";
+        noteList.innerHTML = "";
+      }
+    }
+
+    // --------- init ---------
+    async function init(){
+      // default: hoje
+      const now = new Date();
+      state.selectedUTC = startOfDayUTC(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())));
+      state.monthCursor = new Date(Date.UTC(state.selectedUTC.getUTCFullYear(), state.selectedUTC.getUTCMonth(), 1));
+      selDateLbl.textContent = fmtBR(state.selectedUTC);
+
+      renderColsChooser();
+      renderCalendar();
+
+      await loadObras();
+      applyAll();
+    }
+
+    await init();
+  </script>
 </body>
 </html>
