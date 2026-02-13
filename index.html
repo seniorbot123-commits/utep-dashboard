@@ -104,7 +104,6 @@
     }
     .actions{display:flex;gap:8px;flex-wrap:wrap}
 
-    /* Panes (agora filtros funciona) */
     .pane{display:none;}
     .pane.active{display:block;}
 
@@ -226,7 +225,6 @@
       font-size:12px;
     }
 
-    /* Modal (shared) */
     .overlay{
       position:fixed;inset:0;
       background:rgba(0,0,0,.55);
@@ -321,7 +319,7 @@
     <div class="rightTop">
       <div class="badgeRow">
         <div class="pill" id="todayPill">Data: --/--/----</div>
-        <div class="pill">Versão: VFinal+</div>
+        <div class="pill">Versão: VFinal+Agente</div>
       </div>
       <button class="btn secondary" id="btnReload">Recarregar</button>
     </div>
@@ -340,7 +338,6 @@
         </div>
       </div>
 
-      <!-- Pane FILTROS (agora funciona mesmo) -->
       <div class="pane active" id="paneFiltros">
         <div class="filters">
           <div class="field">
@@ -375,7 +372,6 @@
         </div>
       </div>
 
-      <!-- Pane DETALHES -->
       <div class="pane" id="paneDetalhes">
         <div class="detailBox">
           <div class="pill">Colunas extras</div>
@@ -510,6 +506,7 @@
     let COL_MUN   = "municipio";
     let COL_CRIT  = "criterio";
     let COL_PROJ  = "projeto";
+    let COL_AGENT = "agente_responsavel"; // <<< NOVO
 
     // toggles de colunas extras
     let showExtras = false;
@@ -599,6 +596,7 @@
       const tests = [
         { key:"COL_BASE", candidates:["base_oper_prog", "BASE_OPER_PROG", '"BASE_OPER_PROG"'] },
         { key:"COL_PROJ", candidates:["projeto", "PROJETO", '"PROJETO"'] },
+        { key:"COL_AGENT", candidates:["agente_responsavel", "AGENTE_RESPONSAVEL", '"AGENTE_RESPONSAVEL"'] }, // <<< NOVO
         { key:"COL_PRAZO", candidates:["PREVISAO_EXECUCAO_FIM", "previsao_execucao_fim"] },
         { key:"COL_MUN", candidates:["municipio", "MUNICIPIO"] },
         { key:"COL_CRIT", candidates:["criterio", "CRITERIO"] },
@@ -614,6 +612,7 @@
         if(chosen){
           if(t.key==="COL_BASE") COL_BASE = chosen;
           if(t.key==="COL_PROJ") COL_PROJ = chosen;
+          if(t.key==="COL_AGENT") COL_AGENT = chosen;
           if(t.key==="COL_PRAZO") COL_PRAZO = chosen;
           if(t.key==="COL_MUN") COL_MUN = chosen;
           if(t.key==="COL_CRIT") COL_CRIT = chosen;
@@ -640,6 +639,7 @@
       const selectCols = [
         `${COL_NOTA}`,
         `${COL_PROJ}`,
+        `${COL_AGENT}`, // <<< NOVO
         `${COL_BASE}`,
         `${COL_MUN}`,
         `${COL_CRIT}`,
@@ -768,6 +768,7 @@ Verifique:
       const fixedCols = [
         { k: COL_NOTA, label:"Nota", cls:"nowrap" },
         { k: COL_PROJ, label:"Projeto", cls:"nowrap" },
+        { k: COL_AGENT, label:"Agente responsável", cls:"nowrap" }, // <<< NOVO
         { k: COL_PRAZO, label:"Prazo final", cls:"nowrap" },
         { k: "titulo", label:"Título", cls:"" },
         { k: COL_MUN, label:"Município", cls:"nowrap" },
@@ -789,7 +790,6 @@ Verifique:
         tr.innerHTML = `<td colspan="${cols.length+1}" class="muted">Nenhuma obra para exibir nesta base.</td>`;
         tbody.appendChild(tr);
       }else{
-        // ordena por prazo final
         list = list.slice().sort((a,b)=>{
           const da = parseDateOnly(getField(a,COL_PRAZO));
           const db = parseDateOnly(getField(b,COL_PRAZO));
@@ -835,7 +835,6 @@ Verifique:
       return wrap;
     }
 
-    // ======= Tabs (agora Filtros funciona) =======
     function setActiveTab(tab){
       const isFiltros = tab === "filtros";
       $("tabFiltros").classList.toggle("active", isFiltros);
@@ -844,7 +843,6 @@ Verifique:
       $("paneDetalhes").classList.toggle("active", !isFiltros);
     }
 
-    // ======= NOTAS =======
     function statusTag(status){
       if(status==="executada") return `<span class="tag">Executada</span>`;
       if(status==="problemas") return `<span class="tag warn">Problemas</span>`;
@@ -917,9 +915,7 @@ Verifique:
       await loadNotes();
     }
 
-    // ======= WHATSAPP (novo fluxo com perguntas) =======
     function openWhatsModal(){
-      // default: hoje até +5 dias
       const today = new Date(); today.setHours(0,0,0,0);
       $("wDe").value = fmtDateInput(today);
       $("wAte").value = fmtDateInput(addDays(today, 5));
@@ -973,13 +969,11 @@ Verifique:
         return "Selecione ao menos uma base.";
       }
 
-      // filtra no intervalo e nas bases
       const inRange = allRows
         .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
         .filter(x => x.d && x.d >= d1 && x.d <= d2)
         .filter(x => basesSelected.includes((getField(x.r, COL_BASE) ?? "").toString().trim()));
 
-      // agrupa por data->base
       const map = new Map(); // dateKey -> Map(base -> rows)
       for(const x of inRange){
         const dateKey = fmtDateInput(x.d);
@@ -1012,10 +1006,12 @@ Verifique:
           for(const r of rows){
             const nota = normalizeNota(getField(r, COL_NOTA)) || "—";
             const proj = getField(r, COL_PROJ) || "—";
+            const agente = getField(r, COL_AGENT) || "—"; // <<< NOVO
             const titulo = getField(r, "titulo") || "—";
             const mun = getField(r, COL_MUN) || "—";
             const crit = getField(r, COL_CRIT) || "—";
-            msg += `- Nota ${nota} • ${proj} • ${mun} • ${crit} • ${titulo}\n`;
+            // inclui agente no texto do WhatsApp
+            msg += `- Nota ${nota} • ${proj} • Agente: ${agente} • ${mun} • ${crit} • ${titulo}\n`;
           }
         }
       }
@@ -1047,7 +1043,6 @@ Verifique:
       openWhatsWithText(txt);
     }
 
-    // ======= Init =======
     function setToday(){
       const now = new Date();
       now.setHours(0,0,0,0);
@@ -1067,17 +1062,14 @@ Verifique:
       $("fMunicipio").addEventListener("change", render);
       $("fCriterio").addEventListener("change", render);
 
-      // Tabs (agora alterna panes)
       $("tabFiltros").addEventListener("click", ()=> setActiveTab("filtros"));
       $("tabDetalhes").addEventListener("click", ()=> setActiveTab("detalhes"));
 
-      // Detalhes toggle
       $("tShowExtras").addEventListener("change", (e)=>{
         showExtras = e.target.checked;
         render();
       });
 
-      // WhatsApp
       $("btnWhats").addEventListener("click", openWhatsModal);
       $("btnCloseWhats").addEventListener("click", closeWhatsModal);
       $("overlayWhats").addEventListener("click", (e)=>{ if(e.target === $("overlayWhats")) closeWhatsModal(); });
@@ -1090,7 +1082,6 @@ Verifique:
         document.querySelectorAll('#wBases input[type="checkbox"][data-base]').forEach(c=>c.checked=false);
       });
 
-      // Notes
       $("btnCloseNotes").addEventListener("click", closeNotes);
       $("btnCloseNotes2").addEventListener("click", closeNotes);
       $("overlayNotes").addEventListener("click", (e)=>{ if(e.target === $("overlayNotes")) closeNotes(); });
