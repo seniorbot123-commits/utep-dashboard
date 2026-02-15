@@ -75,7 +75,7 @@
     .panel{
       background:linear-gradient(180deg, rgba(16,56,43,.72), rgba(10,34,26,.66));
       border:1px solid rgba(232,255,244,.12);
-      border-radius:var(--radius);
+      border-radius:18px;
       box-shadow:var(--shadow);
       overflow:hidden;
     }
@@ -170,6 +170,7 @@
     }
     .tag.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.25)}
     .tag.danger{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.25)}
+    .tag.done{background:rgba(124,252,184,.16);border-color:rgba(124,252,184,.32)}
     .linkBtn{
       cursor:pointer;padding:8px 10px;border-radius:12px;
       background:rgba(255,255,255,.06);
@@ -263,6 +264,10 @@
         <div class="tabs">
           <div class="tab active" id="tabFiltros" title="Mostrar/ocultar filtros">Filtros</div>
           <div class="tab" id="tabDetalhes" title="Configurações de colunas">Detalhes</div>
+
+          <!-- NOVO: alternar modo -->
+          <div class="tab" id="tabConcluidas" title="Mostrar apenas obras concluídas">Concluídas</div>
+
           <button class="btn" id="btnWhats">Exportar WhatsApp</button>
         </div>
         <div class="actions">
@@ -351,6 +356,7 @@
               <option value="executada">Executada</option>
               <option value="problemas">Houve problemas</option>
               <option value="nao_executada">Não foi executada</option>
+              <option value="energizada">Energizada (concluída)</option>
             </select>
           </div>
 
@@ -444,7 +450,7 @@
     </div>
   </div>
 
-  <!-- Overlay Não autorizado (sem mostrar e-mail) -->
+  <!-- Overlay Não autorizado -->
   <div class="overlay" id="overlayDenied">
     <div class="modal" style="width:min(560px,100%)">
       <div class="modalHead">
@@ -488,13 +494,21 @@
     let COL_PROJ  = "projeto";
     let COL_AGENT = "agente_responsavel";
 
+    // toggles/estado
     let showExtras = false;
     let allRows = [];
     let bases = [];
     let municipios = [];
     let criterios = [];
+
+    // NOVO: modo de listagem
+    // "ativas" = comportamento normal; "concluidas" = só obras concluídas
+    let mode = "ativas";
+
+    // modal state
     let currentNotaKey = null;
 
+    // helpers
     const $ = (id) => document.getElementById(id);
     function show(el, on){ el.style.display = on ? "flex" : "none"; }
     function showInline(el, on){ el.style.display = on ? "inline-flex" : "none"; }
@@ -628,24 +642,18 @@
 
       setAuthUI(true);
 
-      // Acesso ao dashboard SOMENTE admin (sem mostrar e-mail na UI)
       if((email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
         show($("overlayLogin"), false);
         show($("overlayDenied"), true);
         return;
       }
 
-      // Teste de permissão real (RLS): tenta ler 1 linha de obras
       const { error } = await sb.from("obras").select("nota", { count:"exact" }).limit(1);
       if(error){
         showError(
 `Você está logado, mas o RLS bloqueou o acesso.
 
-${error.message}
-
-Confirme:
-- SQL aplicado (policies)
-- e-mail do admin no SQL = ADMIN_EMAIL no HTML`
+${error.message}`
         );
         show($("overlayLogin"), false);
         show($("overlayDenied"), true);
@@ -654,6 +662,7 @@ Confirme:
 
       show($("overlayLogin"), false);
       show($("overlayDenied"), false);
+
       await loadAll();
     }
 
@@ -695,6 +704,7 @@ Confirme:
       clearError();
       await detectColumns();
 
+      // NOVO: inclui "concluida" na seleção
       const selectCols = [
         `${COL_NOTA}`,
         `${COL_PROJ}`,
@@ -706,6 +716,7 @@ Confirme:
         "titulo",
         "gerencia",
         "status",
+        "concluida"
       ].join(",");
 
       const { data, error } = await sb.from("obras").select(selectCols).limit(5000);
@@ -745,12 +756,23 @@ Confirme:
     }
 
     function render(){
+      clearError();
+
       const chosenDate = $("fData").value ? new Date($("fData").value + "T00:00:00") : null;
       const fBase = $("fBase").value;
       const fMun = $("fMunicipio").value;
       const fCrit = $("fCriterio").value;
 
       let rows = allRows.slice();
+
+      // NOVO: filtra por modo
+      if(mode === "concluidas"){
+        rows = rows.filter(r => !!r.concluida);
+      }else{
+        // "ativas" = não concluídas
+        rows = rows.filter(r => !r.concluida);
+      }
+
       if(fBase) rows = rows.filter(r => (getField(r, COL_BASE) ?? "").toString().trim() === fBase);
       if(fMun) rows = rows.filter(r => (getField(r, COL_MUN) ?? "").toString().trim() === fMun);
       if(fCrit) rows = rows.filter(r => (getField(r, COL_CRIT) ?? "").toString().trim() === fCrit);
@@ -765,35 +787,49 @@ Confirme:
         let showList = [];
         let label = "";
 
-        if(chosenDate){
-          const inDay = baseRows.filter(r => {
-            const d = parseDateOnly(getField(r, COL_PRAZO));
-            return d && sameDay(d, chosenDate);
+        if(mode === "concluidas"){
+          // Concluídas: lista tudo (ordenado por prazo) sem regra de +5 dias
+          showList = baseRows.slice().sort((a,b)=>{
+            const da = parseDateOnly(getField(a, COL_PRAZO));
+            const db = parseDateOnly(getField(b, COL_PRAZO));
+            if(!da && !db) return 0;
+            if(!da) return 1;
+            if(!db) return -1;
+            return da - db;
           });
+          label = `Concluídas (${showList.length})`;
+        }else{
+          // Ativas: regra original
+          if(chosenDate){
+            const inDay = baseRows.filter(r => {
+              const d = parseDateOnly(getField(r, COL_PRAZO));
+              return d && sameDay(d, chosenDate);
+            });
 
-          if(inDay.length){
-            showList = inDay;
-            label = `Obras do dia (${inDay.length})`;
+            if(inDay.length){
+              showList = inDay;
+              label = `Obras do dia (${inDay.length})`;
+            }else{
+              const maxDate = addDays(chosenDate, 5);
+              showList = baseRows
+                .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
+                .filter(x => x.d && x.d >= chosenDate && x.d <= maxDate)
+                .sort((x,y)=> x.d - y.d)
+                .slice(0,5)
+                .map(x=>x.r);
+              label = `Sem obras no dia • Próximas até +5 dias (${showList.length})`;
+            }
           }else{
-            const maxDate = addDays(chosenDate, 5);
+            const today = new Date(); today.setHours(0,0,0,0);
+            const maxDate = addDays(today, 5);
             showList = baseRows
               .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
-              .filter(x => x.d && x.d >= chosenDate && x.d <= maxDate)
+              .filter(x => x.d && x.d >= today && x.d <= maxDate)
               .sort((x,y)=> x.d - y.d)
               .slice(0,5)
               .map(x=>x.r);
-            label = `Sem obras no dia • Próximas até +5 dias (${showList.length})`;
+            label = `Próximas até +5 dias (${showList.length})`;
           }
-        }else{
-          const today = new Date(); today.setHours(0,0,0,0);
-          const maxDate = addDays(today, 5);
-          showList = baseRows
-            .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
-            .filter(x => x.d && x.d >= today && x.d <= maxDate)
-            .sort((x,y)=> x.d - y.d)
-            .slice(0,5)
-            .map(x=>x.r);
-          label = `Próximas até +5 dias (${showList.length})`;
         }
 
         container.appendChild(renderBaseBlock(b, label, showList));
@@ -835,15 +871,6 @@ Confirme:
         tr.innerHTML = `<td colspan="${cols.length+1}" class="muted">Nenhuma obra para exibir nesta base.</td>`;
         tbody.appendChild(tr);
       }else{
-        list = list.slice().sort((a,b)=>{
-          const da = parseDateOnly(getField(a,COL_PRAZO));
-          const db = parseDateOnly(getField(b,COL_PRAZO));
-          if(!da && !db) return 0;
-          if(!da) return 1;
-          if(!db) return -1;
-          return da - db;
-        });
-
         for(const row of list){
           const tr = document.createElement("tr");
           const cells = cols.map(c=>{
@@ -892,6 +919,7 @@ Confirme:
       if(status==="executada") return `<span class="tag">Executada</span>`;
       if(status==="problemas") return `<span class="tag warn">Problemas</span>`;
       if(status==="nao_executada") return `<span class="tag danger">Não executada</span>`;
+      if(status==="energizada") return `<span class="tag done">Energizada</span>`;
       return `<span class="tag">${escapeHtml(status||"—")}</span>`;
     }
 
@@ -952,12 +980,21 @@ Confirme:
       if(!autor){ alert("Informe seu nome."); return; }
       if(!texto){ alert("Escreva a nota."); return; }
 
+      // NOVO: confirmação ao marcar como energizada (conclusão)
+      if(status === "energizada"){
+        const ok = confirm("Confirmar: esta obra foi ENERGIZADA e será movida para 'Concluídas'?");
+        if(!ok) return;
+      }
+
       const payload = { nota: currentNotaKey, autor, texto, status };
       const { error } = await sb.from("notes").insert(payload);
       if(error){ alert("Erro ao salvar nota: " + error.message); return; }
 
       $("nTexto").value = "";
       await loadNotes();
+
+      // Recarrega obras para refletir a conclusão (trigger marca obras.concluida=true)
+      await loadAll();
     }
 
     function openWhatsModal(){
@@ -1003,7 +1040,9 @@ Confirme:
       if(d2 < d1) return "A data final precisa ser maior ou igual à inicial.";
       if(!basesSelected.length) return "Selecione ao menos uma base.";
 
+      // Mantém WhatsApp só das ATIVAS (não concluídas), para não poluir
       const inRange = allRows
+        .filter(r => !r.concluida)
         .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
         .filter(x => x.d && x.d >= d1 && x.d <= d2)
         .filter(x => basesSelected.includes((getField(x.r, COL_BASE) ?? "").toString().trim()));
@@ -1065,12 +1104,28 @@ Confirme:
       $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value);
     }
 
+    // NOVO: alterna modo e UI
+    function setMode(newMode){
+      mode = newMode;
+      $("tabConcluidas").classList.toggle("active", mode === "concluidas");
+      // dica visual: quando estiver em concluídas, desliga a regra +5 dias no texto
+      $("ruleText").innerHTML = (mode === "concluidas")
+        ? `Mostrando <b>somente obras concluídas</b> (marcadas ao salvar nota como <b>Energizada</b>).`
+        : `Regras: mostra obras com <b>prazo final</b> na data escolhida. Se não houver, mostra as <b>5 mais próximas dentro de 5 dias</b>, separadas por Base.`;
+      render();
+    }
+
+    function setActiveTab(tab){
+      const isFiltros = tab === "filtros";
+      $("tabFiltros").classList.toggle("active", isFiltros);
+      $("tabDetalhes").classList.toggle("active", !isFiltros);
+      $("paneFiltros").classList.toggle("active", isFiltros);
+      $("paneDetalhes").classList.toggle("active", !isFiltros);
+    }
+
     (function init(){
       setToday();
       setActiveTab("filtros");
-
-      // não mostra e-mail na UI, mas você pode pré-preencher se quiser:
-      // $("loginEmail").value = "";
 
       $("btnReload").addEventListener("click", guardAndRun);
       $("btnHoje").addEventListener("click", ()=>{ setToday(); render(); });
@@ -1082,6 +1137,11 @@ Confirme:
 
       $("tabFiltros").addEventListener("click", ()=> setActiveTab("filtros"));
       $("tabDetalhes").addEventListener("click", ()=> setActiveTab("detalhes"));
+
+      // NOVO: Concluídas
+      $("tabConcluidas").addEventListener("click", ()=>{
+        setMode(mode === "concluidas" ? "ativas" : "concluidas");
+      });
 
       $("tShowExtras").addEventListener("change", (e)=>{ showExtras = e.target.checked; render(); });
 
@@ -1106,7 +1166,6 @@ Confirme:
 
       sb.auth.onAuthStateChange((_event, _session) => { guardAndRun(); });
 
-      // Start
       guardAndRun();
     })();
   </script>
