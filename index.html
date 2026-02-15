@@ -14,7 +14,7 @@
       --text:#e8fff4;
       --muted:#b9e6d2;
       --line:rgba(232,255,244,.12);
-      --accent:#7CFCB8;     /* verde cana */
+      --accent:#7CFCB8;
       --accent2:#3ddc97;
       --danger:#ff6b6b;
       --warn:#ffd166;
@@ -71,10 +71,7 @@
       border:1px solid rgba(255,255,255,.12);
       box-shadow:none;
     }
-    .wrap{
-      max-width:1200px;margin:0 auto;
-      display:grid;gap:14px;
-    }
+    .wrap{max-width:1200px;margin:0 auto;display:grid;gap:14px;}
     .panel{
       background:linear-gradient(180deg, rgba(16,56,43,.72), rgba(10,34,26,.66));
       border:1px solid rgba(232,255,244,.12);
@@ -103,10 +100,8 @@
       background:rgba(124,252,184,.14);
     }
     .actions{display:flex;gap:8px;flex-wrap:wrap}
-
     .pane{display:none;}
     .pane.active{display:block;}
-
     .filters{
       padding:14px 16px;
       display:grid;
@@ -125,29 +120,17 @@
       outline:none;
     }
     input[type="date"]{color-scheme:dark}
-    .rule{
-      padding:0 16px 14px 16px;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .detailBox{
-      padding:14px 16px 6px 16px;
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
-    }
-    .toggleRow{
-      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-      padding:0 16px 14px 16px;
-    }
+    .rule{padding:0 16px 14px 16px;color:var(--muted);font-size:13px;}
+    .detailBox{padding:14px 16px 6px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .toggleRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 16px 14px 16px;}
     .toggle{
       display:flex;gap:10px;align-items:center;
       padding:10px 12px;border-radius:14px;
       border:1px solid rgba(232,255,244,.12);
       background:rgba(0,0,0,.12);
-      cursor:pointer;
-      user-select:none;
+      cursor:pointer; user-select:none;
     }
     .toggle input{width:auto}
-
     .error{
       margin:0 16px 16px 16px;
       padding:12px 14px;
@@ -159,18 +142,8 @@
       font-family:var(--mono);
       font-size:12px;
     }
-    .gridBases{
-      padding:14px 16px 18px 16px;
-      display:grid;
-      grid-template-columns:1fr;
-      gap:12px;
-    }
-    .baseBlock{
-      border:1px solid rgba(232,255,244,.12);
-      background:rgba(0,0,0,.10);
-      border-radius:16px;
-      overflow:hidden;
-    }
+    .gridBases{padding:14px 16px 18px 16px;display:grid;grid-template-columns:1fr;gap:12px;}
+    .baseBlock{border:1px solid rgba(232,255,244,.12);background:rgba(0,0,0,.10);border-radius:16px;overflow:hidden;}
     .baseHead{
       padding:12px 14px;
       display:flex;justify-content:space-between;align-items:center;
@@ -179,23 +152,11 @@
     }
     .baseHead .name{font-weight:700}
     .baseHead .count{color:var(--muted);font-size:13px}
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-    }
-    th, td{
-      padding:10px 10px;
-      border-bottom:1px solid rgba(232,255,244,.10);
-      vertical-align:top;
-    }
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th, td{padding:10px 10px;border-bottom:1px solid rgba(232,255,244,.10);vertical-align:top;}
     th{
-      text-align:left;
-      color:var(--muted);
-      font-weight:600;
-      background:rgba(0,0,0,.10);
-      position:sticky; top:0;
-      z-index:1;
+      text-align:left;color:var(--muted);font-weight:600;
+      background:rgba(0,0,0,.10);position:sticky; top:0;z-index:1;
     }
     tr:hover td{background:rgba(124,252,184,.06)}
     .nowrap{white-space:nowrap}
@@ -205,33 +166,21 @@
       padding:4px 10px;border-radius:999px;
       background:rgba(124,252,184,.12);
       border:1px solid rgba(124,252,184,.22);
-      font-size:12px;
-      white-space:nowrap;
+      font-size:12px;white-space:nowrap;
     }
     .tag.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.25)}
     .tag.danger{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.25)}
     .linkBtn{
-      cursor:pointer;
-      padding:8px 10px;border-radius:12px;
+      cursor:pointer;padding:8px 10px;border-radius:12px;
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.12);
-      color:var(--text);
-      font-size:12px;
+      color:var(--text);font-size:12px;
     }
-    .footer{
-      max-width:1200px;margin:16px auto 0 auto;
-      text-align:center;
-      color:var(--muted);
-      font-size:12px;
-    }
-
+    .footer{max-width:1200px;margin:16px auto 0 auto;text-align:center;color:var(--muted);font-size:12px;}
     .overlay{
-      position:fixed;inset:0;
-      background:rgba(0,0,0,.55);
-      display:none;
-      align-items:center;justify-content:center;
-      padding:18px;
-      z-index:9999;
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      display:none;align-items:center;justify-content:center;
+      padding:18px;z-index:9999;
     }
     .modal{
       width:min(760px, 100%);
@@ -242,63 +191,40 @@
       overflow:hidden;
     }
     .modalHead{
-      padding:12px 14px;
-      border-bottom:1px solid var(--line);
+      padding:12px 14px;border-bottom:1px solid var(--line);
       display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
     }
     .modalHead h3{margin:0;font-size:16px}
     .modalBody{padding:14px}
-    .modalGrid{
-      display:grid;grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
+    .modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .modalGrid .field:last-child{grid-column:1/-1}
     textarea{
-      width:100%;
-      min-height:110px;
-      resize:vertical;
+      width:100%;min-height:110px;resize:vertical;
       background:rgba(0,0,0,.20);
       border:1px solid rgba(232,255,244,.14);
       color:var(--text);
-      padding:12px 12px;
-      border-radius:14px;
-      outline:none;
+      padding:12px 12px;border-radius:14px;outline:none;
       font-family:var(--sans);
     }
-    .notesList{
-      margin-top:14px;
-      border-top:1px solid var(--line);
-      padding-top:12px;
-    }
+    .notesList{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;}
     .noteItem{
       border:1px solid rgba(232,255,244,.12);
       background:rgba(0,0,0,.12);
       border-radius:14px;
-      padding:10px 12px;
-      margin-top:10px;
+      padding:10px 12px;margin-top:10px;
     }
     .noteMeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .noteMeta .who{font-weight:700}
     .noteMeta .when{color:var(--muted);font-size:12px}
     .noteText{margin-top:8px;color:var(--text);white-space:pre-wrap}
-    .modalFoot{
-      display:flex;gap:10px;justify-content:flex-end;
-      padding:12px 14px;border-top:1px solid var(--line);
-      flex-wrap:wrap;
-    }
-    .checkList{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:8px;
-      padding:10px 0 0 0;
-    }
+    .modalFoot{display:flex;gap:10px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--line);flex-wrap:wrap;}
+    .checkList{display:grid;grid-template-columns: 1fr 1fr;gap:8px;padding:10px 0 0 0;}
     .checkItem{
       display:flex;gap:10px;align-items:center;
       padding:10px 12px;border-radius:14px;
       border:1px solid rgba(232,255,244,.12);
       background:rgba(0,0,0,.12);
     }
-
     @media (max-width:900px){
       .filters{grid-template-columns:1fr}
       .modalGrid{grid-template-columns:1fr}
@@ -322,9 +248,8 @@
         <div class="pill">Versão: VFinal+Agente</div>
       </div>
 
-      <!-- Auth UI -->
       <div class="badgeRow" style="gap:8px">
-        <div class="pill" id="authPill" style="display:none">🔒 Não autenticado</div>
+        <div class="pill" id="authPill" style="display:none">🔒</div>
         <button class="btn secondary" id="btnLogout" style="display:none">Logout</button>
       </div>
 
@@ -495,19 +420,19 @@
     </div>
   </div>
 
-  <!-- Overlay Login (obrigatório) -->
+  <!-- Overlay Login (somente você) -->
   <div class="overlay" id="overlayLogin">
     <div class="modal" style="width:min(560px,100%)">
       <div class="modalHead">
         <div>
           <h3>Login</h3>
-          <div class="muted">Acesso restrito • apenas <b>@neoenergia.com</b> • link mágico (sem senha)</div>
+          <div class="muted">Acesso restrito (somente administrador) • link mágico (sem senha)</div>
         </div>
       </div>
       <div class="modalBody">
         <div class="field">
-          <label>E-mail corporativo</label>
-          <input id="loginEmail" type="email" placeholder="nome.sobrenome@neoenergia.com" autocomplete="email" />
+          <label>Seu e-mail</label>
+          <input id="loginEmail" type="email" autocomplete="email" />
         </div>
         <div class="actions" style="margin-top:10px">
           <button class="btn" id="btnSendMagic">Enviar link</button>
@@ -516,67 +441,61 @@
           Você receberá um e-mail com o link de acesso.
         </div>
       </div>
-      <div class="modalFoot">
-        <button class="btn secondary" id="btnLoginHelp" title="Dica">Dica</button>
-      </div>
     </div>
   </div>
 
-  <!-- Overlay Pendente -->
-  <div class="overlay" id="overlayPending">
+  <!-- Overlay Não autorizado -->
+  <div class="overlay" id="overlayDenied">
     <div class="modal" style="width:min(560px,100%)">
       <div class="modalHead">
         <div>
-          <h3>Aguardando aprovação</h3>
-          <div class="muted">Seu acesso foi registrado, mas precisa ser liberado pelo administrador.</div>
+          <h3>Sem permissão</h3>
+          <div class="muted">Este usuário não tem acesso ao dashboard.</div>
         </div>
       </div>
       <div class="modalBody">
-        <div class="pill" id="pendingPill">📩 Usuário: —</div>
+        <div class="pill" id="deniedPill">🚫 Usuário: —</div>
         <div class="rule" style="padding:10px 0 0 0">
-          Assim que aprovado, recarregue a página (F5).
+          Faça logout e entre com o e-mail autorizado.
         </div>
       </div>
       <div class="modalFoot">
-        <button class="btn secondary" id="btnPendingLogout">Logout</button>
+        <button class="btn secondary" id="btnDeniedLogout">Logout</button>
       </div>
     </div>
   </div>
 
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // ======= CONFIG (suas credenciais) =======
+    // ======= CONFIG =======
     const SUPABASE_URL = "https://yyfhnuafwzeglwcpnmkd.supabase.co".trim();
     const SUPABASE_ANON_KEY = "sb_publishable_7rmfNL9N6limSSFxFcl2Og_MV9xkbjx".trim();
 
-    // ======= APP =======
+    // Coloque AQUI o seu e-mail exato (o mesmo do SQL)
+    const MY_EMAIL = "mamutevitor@gmail.com";
+
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // nomes de coluna (auto-detect)
     let COL_BASE = "base_oper_prog";
     let COL_PRAZO = "PREVISAO_EXECUCAO_FIM";
     let COL_NOTA  = "nota";
     let COL_MUN   = "municipio";
     let COL_CRIT  = "criterio";
     let COL_PROJ  = "projeto";
-    let COL_AGENT = "agente_responsavel"; // <<< NOVO
+    let COL_AGENT = "agente_responsavel";
 
-    // toggles de colunas extras
     let showExtras = false;
-
-    // estado
     let allRows = [];
     let bases = [];
     let municipios = [];
     let criterios = [];
-
-    // modal state
     let currentNotaKey = null;
 
-    // helpers
     const $ = (id) => document.getElementById(id);
+
+    function show(el, on){ el.style.display = on ? "flex" : "none"; }
+    function showInline(el, on){ el.style.display = on ? "inline-flex" : "none"; }
 
     function fmtDateBR(iso){
       if(!iso) return "";
@@ -591,21 +510,18 @@
       const yy = d.getFullYear();
       return `${dd}/${mm}/${yy}`;
     }
-
     function fmtDateInput(d){
       const yy = d.getFullYear();
       const mm = String(d.getMonth()+1).padStart(2,"0");
       const dd = String(d.getDate()).padStart(2,"0");
       return `${yy}-${mm}-${dd}`;
     }
-
     function normalizeNota(v){
       if(v === null || v === undefined) return "";
       let s = String(v).trim();
       s = s.replace(/\.0$/,"");
       return s;
     }
-
     function parseDateOnly(v){
       if(!v) return null;
       const s = String(v).slice(0,10);
@@ -613,20 +529,17 @@
       if(String(d)==="Invalid Date") return null;
       return d;
     }
-
     function addDays(d, n){
       const x = new Date(d);
       x.setDate(x.getDate()+n);
       return x;
     }
-
     function sameDay(a,b){
       return a && b &&
         a.getFullYear()===b.getFullYear() &&
         a.getMonth()===b.getMonth() &&
         a.getDate()===b.getDate();
     }
-
     function escapeHtml(s){
       return String(s)
         .replaceAll("&","&amp;")
@@ -635,7 +548,6 @@
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
     }
-
     function showError(msg){
       const box = $("errBox");
       box.style.display = "block";
@@ -646,10 +558,6 @@
       box.style.display = "none";
       box.textContent = "";
     }
-
-    // ========= AUTH + APPROVAL =========
-    function show(el, on){ el.style.display = on ? "flex" : "none"; }
-    function showInline(el, on){ el.style.display = on ? "inline-flex" : "none"; }
 
     function setAuthUI(email){
       const pill = $("authPill");
@@ -669,13 +577,12 @@
       const email = ($("loginEmail").value || "").trim().toLowerCase();
       const msg = $("loginMsg");
 
-      if(!email.endsWith("@neoenergia.com")){
-        msg.textContent = "Use apenas e-mail corporativo @neoenergia.com.";
+      if(email !== MY_EMAIL.toLowerCase()){
+        msg.textContent = "Este login é restrito ao administrador.";
         msg.style.color = "var(--warn)";
         return;
       }
 
-      // Redirect exato pro GitHub Pages atual (sem query/hash)
       const redirectTo = window.location.origin + window.location.pathname;
 
       msg.textContent = "Enviando link...";
@@ -699,11 +606,12 @@
     async function logout(){
       await sb.auth.signOut();
       setAuthUI(null);
-      show($("overlayPending"), false);
+      show($("overlayDenied"), false);
       show($("overlayLogin"), true);
     }
 
-    async function checkApprovalAndRun(){
+    // Checa sessão + e-mail + faz um SELECT mínimo em obras para confirmar RLS
+    async function guardAndRun(){
       clearError();
 
       const { data: { session } } = await sb.auth.getSession();
@@ -711,49 +619,41 @@
 
       if(!session){
         setAuthUI(null);
-        show($("overlayPending"), false);
+        show($("overlayDenied"), false);
         show($("overlayLogin"), true);
         return;
       }
 
       setAuthUI(email);
 
-      // Confere aprovação (policy permite SELECT do próprio registro)
-      const { data, error } = await sb
-        .from("user_access")
-        .select("is_approved,email")
-        .eq("user_id", session.user.id)
-        .single();
+      if((email || "").toLowerCase() !== MY_EMAIL.toLowerCase()){
+        show($("overlayLogin"), false);
+        show($("overlayDenied"), true);
+        $("deniedPill").textContent = "🚫 Usuário: " + (email || "—");
+        return;
+      }
 
+      // Teste de permissão real (RLS): tenta ler 1 linha de obras
+      const { error } = await sb.from("obras").select("nota", { count:"exact" }).limit(1);
       if(error){
         showError(
-`Falha ao verificar aprovação (tabela user_access).
+`Você está logado, mas o RLS bloqueou o acesso.
 
 ${error.message}
 
-Verifique:
-- Trigger em auth.users criando user_access
-- Policy user_access_select_own (SELECT own)
-- RLS habilitado`
+Confirme:
+- SQL 'MODO SOMENTE EU' aplicado (policies)
+- seu e-mail no SQL = MY_EMAIL no HTML`
         );
         show($("overlayLogin"), false);
-        show($("overlayPending"), true);
-        $("pendingPill").textContent = "📩 Usuário: " + (email || "—");
+        show($("overlayDenied"), true);
+        $("deniedPill").textContent = "🚫 Usuário: " + (email || "—");
         return;
       }
 
-      if(!data?.is_approved){
-        show($("overlayLogin"), false);
-        show($("overlayPending"), true);
-        $("pendingPill").textContent = "📩 Usuário: " + (data?.email || email || "—");
-        return;
-      }
-
-      // aprovado => libera
       show($("overlayLogin"), false);
-      show($("overlayPending"), false);
+      show($("overlayDenied"), false);
 
-      // Só agora carrega dados
       await loadAll();
     }
 
@@ -793,12 +693,6 @@ Verifique:
 
     async function loadAll(){
       clearError();
-
-      if(!SUPABASE_URL || !SUPABASE_ANON_KEY){
-        showError("Faltou SUPABASE_URL ou SUPABASE_ANON_KEY.");
-        return;
-      }
-
       await detectColumns();
 
       const selectCols = [
@@ -820,12 +714,7 @@ Verifique:
         showError(
 `Não consegui carregar dados da tabela 'obras'.
 
-Detalhe: ${error.message}
-
-Verifique:
-- RLS/policies da tabela obras (SELECT só para aprovado)
-- Usuário está logado e aprovado
-- Nome da tabela e colunas`
+Detalhe: ${error.message}`
         );
         return;
       }
@@ -860,21 +749,17 @@ Verifique:
     }
 
     function render(){
-      clearError();
-
       const chosenDate = $("fData").value ? new Date($("fData").value + "T00:00:00") : null;
       const fBase = $("fBase").value;
       const fMun = $("fMunicipio").value;
       const fCrit = $("fCriterio").value;
 
       let rows = allRows.slice();
-
       if(fBase) rows = rows.filter(r => (getField(r, COL_BASE) ?? "").toString().trim() === fBase);
       if(fMun) rows = rows.filter(r => (getField(r, COL_MUN) ?? "").toString().trim() === fMun);
       if(fCrit) rows = rows.filter(r => (getField(r, COL_CRIT) ?? "").toString().trim() === fCrit);
 
       const basesToShow = (fBase ? [fBase] : (bases.length ? bases : ["(Sem base)"]));
-
       const container = $("gridBases");
       container.innerHTML = "";
 
@@ -941,11 +826,9 @@ Verifique:
         { k: COL_CRIT, label:"Critério", cls:"nowrap" },
         { k: "status", label:"Status", cls:"nowrap" },
       ];
-      const extraCols = [
-        { k: "gerencia", label:"Gerência", cls:"nowrap" },
-      ];
-
+      const extraCols = [{ k: "gerencia", label:"Gerência", cls:"nowrap" }];
       const cols = showExtras ? fixedCols.concat(extraCols) : fixedCols;
+
       thead.innerHTML = `<tr>${cols.map(c=>`<th class="${c.cls||""}">${escapeHtml(c.label)}</th>`).join("")}<th class="nowrap">Ações</th></tr>`;
       table.appendChild(thead);
 
@@ -1036,7 +919,7 @@ Verifique:
 
       const { data, error } = await sb
         .from("notes")
-        .select("id, nota, autor, texto, status, created_at")  // (auditoria fica no banco: user_id/user_email)
+        .select("id, nota, autor, texto, status, created_at")
         .eq("nota", currentNotaKey)
         .order("created_at", { ascending:false });
 
@@ -1073,10 +956,8 @@ Verifique:
       if(!autor){ alert("Informe seu nome."); return; }
       if(!texto){ alert("Escreva a nota."); return; }
 
-      // Auditoria (user_id/user_email) será preenchida por trigger no banco
       const payload = { nota: currentNotaKey, autor, texto, status };
       const { error } = await sb.from("notes").insert(payload);
-
       if(error){ alert("Erro ao salvar nota: " + error.message); return; }
 
       $("nTexto").value = "";
@@ -1089,21 +970,16 @@ Verifique:
       $("wAte").value = fmtDateInput(addDays(today, 5));
       $("overlayWhats").style.display = "flex";
     }
-    function closeWhatsModal(){
-      $("overlayWhats").style.display = "none";
-    }
+    function closeWhatsModal(){ $("overlayWhats").style.display = "none"; }
 
     function buildWhatsBases(){
       const wrap = $("wBases");
-      if(!wrap) return;
       wrap.innerHTML = "";
-
       const list = (bases && bases.length) ? bases : [];
       if(!list.length){
         wrap.innerHTML = `<div class="muted">Carregue os dados primeiro.</div>`;
         return;
       }
-
       for(const b of list){
         const id = "wb_" + b.replace(/\W+/g,"_");
         const div = document.createElement("label");
@@ -1117,32 +993,26 @@ Verifique:
     }
 
     function getSelectedWhatsBases(){
-      const checks = Array.from(document.querySelectorAll('#wBases input[type="checkbox"][data-base]'));
-      return checks.filter(c=>c.checked).map(c=>c.getAttribute("data-base"));
+      return Array.from(document.querySelectorAll('#wBases input[type="checkbox"][data-base]'))
+        .filter(c=>c.checked)
+        .map(c=>c.getAttribute("data-base"));
     }
 
     function buildWhatsTextRange(fromDate, toDate, basesSelected){
       const d1 = new Date(fromDate + "T00:00:00");
       const d2 = new Date(toDate + "T00:00:00");
-      d1.setHours(0,0,0,0);
-      d2.setHours(0,0,0,0);
+      d1.setHours(0,0,0,0); d2.setHours(0,0,0,0);
 
-      if(String(d1)==="Invalid Date" || String(d2)==="Invalid Date"){
-        return "Escolha datas válidas.";
-      }
-      if(d2 < d1){
-        return "A data final precisa ser maior ou igual à inicial.";
-      }
-      if(!basesSelected.length){
-        return "Selecione ao menos uma base.";
-      }
+      if(String(d1)==="Invalid Date" || String(d2)==="Invalid Date") return "Escolha datas válidas.";
+      if(d2 < d1) return "A data final precisa ser maior ou igual à inicial.";
+      if(!basesSelected.length) return "Selecione ao menos uma base.";
 
       const inRange = allRows
         .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
         .filter(x => x.d && x.d >= d1 && x.d <= d2)
         .filter(x => basesSelected.includes((getField(x.r, COL_BASE) ?? "").toString().trim()));
 
-      const map = new Map(); // dateKey -> Map(base -> rows)
+      const map = new Map();
       for(const x of inRange){
         const dateKey = fmtDateInput(x.d);
         if(!map.has(dateKey)) map.set(dateKey, new Map());
@@ -1154,9 +1024,7 @@ Verifique:
 
       const dateKeys = Array.from(map.keys()).sort((a,b)=>a.localeCompare(b));
       const header = `📌 Obras planejadas (${fmtDateBR(d1)} → ${fmtDateBR(d2)})`;
-      if(!dateKeys.length){
-        return `${header}\n\nNenhuma obra encontrada no período para as bases selecionadas.`;
-      }
+      if(!dateKeys.length) return `${header}\n\nNenhuma obra encontrada no período para as bases selecionadas.`;
 
       let msg = header + "\n";
       for(const dk of dateKeys){
@@ -1165,12 +1033,7 @@ Verifique:
         const baseKeys = Array.from(mb.keys()).sort((a,b)=>a.localeCompare(b));
         for(const b of baseKeys){
           msg += `\n🏷️ Base: ${b}\n`;
-          const rows = mb.get(b).slice().sort((a,b)=>{
-            const na = normalizeNota(getField(a, COL_NOTA));
-            const nb = normalizeNota(getField(b, COL_NOTA));
-            return na.localeCompare(nb);
-          });
-
+          const rows = mb.get(b).slice();
           for(const r of rows){
             const nota = normalizeNota(getField(r, COL_NOTA)) || "—";
             const proj = getField(r, COL_PROJ) || "—";
@@ -1186,33 +1049,22 @@ Verifique:
     }
 
     function openWhatsWithText(text){
-      const url = "https://wa.me/?text=" + encodeURIComponent(text);
-      window.open(url, "_blank");
+      window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
     }
-
     function previewWhats(){
-      const fromDate = $("wDe").value;
-      const toDate = $("wAte").value;
-      const basesSelected = getSelectedWhatsBases();
-      const txt = buildWhatsTextRange(fromDate, toDate, basesSelected);
+      const txt = buildWhatsTextRange($("wDe").value, $("wAte").value, getSelectedWhatsBases());
       alert(txt.length > 1500 ? (txt.slice(0,1500) + "\n\n...(prévia cortada)") : txt);
     }
-
     function sendWhats(){
-      const fromDate = $("wDe").value;
-      const toDate = $("wAte").value;
-      const basesSelected = getSelectedWhatsBases();
-      const txt = buildWhatsTextRange(fromDate, toDate, basesSelected);
+      const txt = buildWhatsTextRange($("wDe").value, $("wAte").value, getSelectedWhatsBases());
       if(txt.startsWith("Escolha") || txt.startsWith("A data") || txt.startsWith("Selecione")){
-        alert(txt);
-        return;
+        alert(txt); return;
       }
       openWhatsWithText(txt);
     }
 
     function setToday(){
-      const now = new Date();
-      now.setHours(0,0,0,0);
+      const now = new Date(); now.setHours(0,0,0,0);
       $("fData").value = fmtDateInput(now);
       $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value);
     }
@@ -1221,7 +1073,11 @@ Verifique:
       setToday();
       setActiveTab("filtros");
 
-      $("btnReload").addEventListener("click", checkApprovalAndRun);
+      // Pré-preenche e trava o campo com seu e-mail (opcional)
+      $("loginEmail").value = MY_EMAIL;
+      $("loginEmail").readOnly = true;
+
+      $("btnReload").addEventListener("click", guardAndRun);
       $("btnHoje").addEventListener("click", ()=>{ setToday(); render(); });
 
       $("fData").addEventListener("change", ()=>{ $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value); render(); });
@@ -1232,22 +1088,15 @@ Verifique:
       $("tabFiltros").addEventListener("click", ()=> setActiveTab("filtros"));
       $("tabDetalhes").addEventListener("click", ()=> setActiveTab("detalhes"));
 
-      $("tShowExtras").addEventListener("change", (e)=>{
-        showExtras = e.target.checked;
-        render();
-      });
+      $("tShowExtras").addEventListener("change", (e)=>{ showExtras = e.target.checked; render(); });
 
       $("btnWhats").addEventListener("click", openWhatsModal);
       $("btnCloseWhats").addEventListener("click", closeWhatsModal);
       $("overlayWhats").addEventListener("click", (e)=>{ if(e.target === $("overlayWhats")) closeWhatsModal(); });
       $("btnPreviewWhats").addEventListener("click", previewWhats);
       $("btnSendWhats").addEventListener("click", sendWhats);
-      $("btnSelAll").addEventListener("click", ()=>{
-        document.querySelectorAll('#wBases input[type="checkbox"][data-base]').forEach(c=>c.checked=true);
-      });
-      $("btnSelNone").addEventListener("click", ()=>{
-        document.querySelectorAll('#wBases input[type="checkbox"][data-base]').forEach(c=>c.checked=false);
-      });
+      $("btnSelAll").addEventListener("click", ()=>{ document.querySelectorAll('#wBases input[type="checkbox"][data-base]').forEach(c=>c.checked=true); });
+      $("btnSelNone").addEventListener("click", ()=>{ document.querySelectorAll('#wBases input[type="checkbox"][data-base]').forEach(c=>c.checked=false); });
 
       $("btnCloseNotes").addEventListener("click", closeNotes);
       $("btnCloseNotes2").addEventListener("click", closeNotes);
@@ -1255,21 +1104,15 @@ Verifique:
       $("btnSalvarNota").addEventListener("click", saveNote);
       $("btnRecarregarNotas").addEventListener("click", loadNotes);
 
-      // Auth buttons
+      // Auth
       $("btnSendMagic").addEventListener("click", sendMagicLink);
       $("btnLogout").addEventListener("click", logout);
-      $("btnPendingLogout").addEventListener("click", logout);
-      $("btnLoginHelp").addEventListener("click", ()=>{
-        alert("Dica: confirme no Supabase Auth a 'Site URL' e 'Redirect URLs' com o link do GitHub Pages. Se não receber o e-mail, verifique spam/lixo eletrônico.");
-      });
+      $("btnDeniedLogout").addEventListener("click", logout);
 
-      // Reagir a mudanças de sessão (ex.: magic link)
-      sb.auth.onAuthStateChange((_event, _session) => {
-        checkApprovalAndRun();
-      });
+      sb.auth.onAuthStateChange((_event, _session) => { guardAndRun(); });
 
-      // Start: trava até aprovação
-      checkApprovalAndRun();
+      // Start
+      guardAndRun();
     })();
   </script>
 </body>
