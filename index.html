@@ -66,6 +66,7 @@
       transition:.15s transform ease, .15s opacity ease;
     }
     .btn:hover{transform:translateY(-1px)}
+    .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
     .btn.secondary{
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.12);
@@ -264,10 +265,7 @@
         <div class="tabs">
           <div class="tab active" id="tabFiltros" title="Mostrar/ocultar filtros">Filtros</div>
           <div class="tab" id="tabDetalhes" title="Configurações de colunas">Detalhes</div>
-
-          <!-- NOVO: alternar modo -->
           <div class="tab" id="tabConcluidas" title="Mostrar apenas obras concluídas">Concluídas</div>
-
           <button class="btn" id="btnWhats">Exportar WhatsApp</button>
         </div>
         <div class="actions">
@@ -471,6 +469,7 @@
     </div>
   </div>
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -478,9 +477,11 @@
     const SUPABASE_URL = "https://yyfhnuafwzeglwcpnmkd.supabase.co".trim();
     const SUPABASE_ANON_KEY = "sb_publishable_7rmfNL9N6limSSFxFcl2Og_MV9xkbjx".trim();
 
-    // ======= LOGIN RULES (não exibidas na UI) =======
+    // Regras de quem pode RECEBER link (UI não mostra isso)
     const ADMIN_EMAIL = "mamutevitor@gmail.com";
     const ALLOW_DOMAIN = "@neoenergia.com";
+
+    // GHP: use a URL final (não origin dinâmico) pra evitar redirect quebrado
     const REDIRECT_TO = "https://thowosken.github.io/utep-dashboard/";
 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -494,19 +495,23 @@
     let COL_PROJ  = "projeto";
     let COL_AGENT = "agente_responsavel";
 
-    // toggles/estado
+    // estado
     let showExtras = false;
     let allRows = [];
     let bases = [];
     let municipios = [];
     let criterios = [];
 
-    // NOVO: modo de listagem
-    // "ativas" = comportamento normal; "concluidas" = só obras concluídas
-    let mode = "ativas";
+    // modo
+    let mode = "ativas"; // "ativas" | "concluidas"
 
     // modal state
     let currentNotaKey = null;
+
+    // OTP anti-spam
+    let lastOtpAt = 0;
+    const OTP_COOLDOWN_MS = 60_000; // 1 min
+    let otpInFlight = false;
 
     // helpers
     const $ = (id) => document.getElementById(id);
@@ -589,35 +594,64 @@
       }
     }
 
+    function isAllowedToReceiveLink(email){
+      const e = (email||"").toLowerCase();
+      return (e === ADMIN_EMAIL.toLowerCase()) || e.endsWith(ALLOW_DOMAIN);
+    }
+
     async function sendMagicLink(){
-      const email = ($("loginEmail").value || "").trim().toLowerCase();
+      if(otpInFlight) return;
+      const btn = $("btnSendMagic");
       const msg = $("loginMsg");
 
-      const allowedToReceiveLink =
-        (email === ADMIN_EMAIL.toLowerCase()) || email.endsWith(ALLOW_DOMAIN);
+      const email = ($("loginEmail").value || "").trim().toLowerCase();
 
-      if(!allowedToReceiveLink){
+      // não revelar regras: mensagem genérica
+      if(!isAllowedToReceiveLink(email)){
         msg.textContent = "E-mail não permitido para login.";
         msg.style.color = "var(--warn)";
         return;
       }
 
-      msg.textContent = "Enviando link...";
-      msg.style.color = "var(--muted)";
-
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: REDIRECT_TO }
-      });
-
-      if(error){
-        msg.textContent = "Erro: " + error.message;
-        msg.style.color = "var(--danger)";
+      const now = Date.now();
+      if(now - lastOtpAt < OTP_COOLDOWN_MS){
+        msg.textContent = "Aguarde um pouco antes de pedir outro link.";
+        msg.style.color = "var(--warn)";
         return;
       }
 
-      msg.textContent = "Link enviado! Verifique seu e-mail (e spam).";
-      msg.style.color = "var(--accent)";
+      otpInFlight = true;
+      btn.disabled = true;
+
+      msg.textContent = "Enviando link…";
+      msg.style.color = "var(--muted)";
+
+      try{
+        const { error } = await sb.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: REDIRECT_TO }
+        });
+
+        if(error){
+          const m = (error.message || "").toLowerCase();
+          if(m.includes("rate limit")){
+            msg.textContent = "Limite de envio atingido. Verifique seu e-mail (e spam) e tente novamente mais tarde.";
+            msg.style.color = "var(--warn)";
+          }else{
+            msg.textContent = "Erro ao enviar link.";
+            msg.style.color = "var(--danger)";
+          }
+          return;
+        }
+
+        lastOtpAt = Date.now();
+        msg.textContent = "Link enviado! Verifique seu e-mail (e spam).";
+        msg.style.color = "var(--accent)";
+      } finally {
+        otpInFlight = false;
+        // reabilita em 15s pra evitar spam
+        setTimeout(()=>{ btn.disabled = false; }, 15000);
+      }
     }
 
     async function logout(){
@@ -627,6 +661,7 @@
       show($("overlayLogin"), true);
     }
 
+    // Checa sessão + e-mail autorizado (ADMIN) + SELECT mínimo (RLS)
     async function guardAndRun(){
       clearError();
 
@@ -642,19 +677,17 @@
 
       setAuthUI(true);
 
-      if((email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+      // acesso ao dashboard: somente ADMIN (você)
+      if((email||"").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
         show($("overlayLogin"), false);
         show($("overlayDenied"), true);
         return;
       }
 
+      // teste RLS real
       const { error } = await sb.from("obras").select("nota", { count:"exact" }).limit(1);
       if(error){
-        showError(
-`Você está logado, mas o RLS bloqueou o acesso.
-
-${error.message}`
-        );
+        showError(`Você está logado, mas o RLS bloqueou o acesso.\n\n${error.message}`);
         show($("overlayLogin"), false);
         show($("overlayDenied"), true);
         return;
@@ -704,7 +737,6 @@ ${error.message}`
       clearError();
       await detectColumns();
 
-      // NOVO: inclui "concluida" na seleção
       const selectCols = [
         `${COL_NOTA}`,
         `${COL_PROJ}`,
@@ -755,9 +787,16 @@ ${error.message}`
       $("fCriterio").innerHTML = `<option value="">Todos</option>` + criterios.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
     }
 
-    function render(){
-      clearError();
+    function setMode(newMode){
+      mode = newMode;
+      $("tabConcluidas").classList.toggle("active", mode === "concluidas");
+      $("ruleText").innerHTML = (mode === "concluidas")
+        ? `Mostrando <b>somente obras concluídas</b> (marcadas ao salvar nota como <b>Energizada</b>).`
+        : `Regras: mostra obras com <b>prazo final</b> na data escolhida. Se não houver, mostra as <b>5 mais próximas dentro de 5 dias</b>, separadas por Base.`;
+      render();
+    }
 
+    function render(){
       const chosenDate = $("fData").value ? new Date($("fData").value + "T00:00:00") : null;
       const fBase = $("fBase").value;
       const fMun = $("fMunicipio").value;
@@ -765,11 +804,9 @@ ${error.message}`
 
       let rows = allRows.slice();
 
-      // NOVO: filtra por modo
       if(mode === "concluidas"){
         rows = rows.filter(r => !!r.concluida);
-      }else{
-        // "ativas" = não concluídas
+      } else {
         rows = rows.filter(r => !r.concluida);
       }
 
@@ -788,7 +825,6 @@ ${error.message}`
         let label = "";
 
         if(mode === "concluidas"){
-          // Concluídas: lista tudo (ordenado por prazo) sem regra de +5 dias
           showList = baseRows.slice().sort((a,b)=>{
             const da = parseDateOnly(getField(a, COL_PRAZO));
             const db = parseDateOnly(getField(b, COL_PRAZO));
@@ -798,8 +834,7 @@ ${error.message}`
             return da - db;
           });
           label = `Concluídas (${showList.length})`;
-        }else{
-          // Ativas: regra original
+        } else {
           if(chosenDate){
             const inDay = baseRows.filter(r => {
               const d = parseDateOnly(getField(r, COL_PRAZO));
@@ -907,14 +942,6 @@ ${error.message}`
       return wrap;
     }
 
-    function setActiveTab(tab){
-      const isFiltros = tab === "filtros";
-      $("tabFiltros").classList.toggle("active", isFiltros);
-      $("tabDetalhes").classList.toggle("active", !isFiltros);
-      $("paneFiltros").classList.toggle("active", isFiltros);
-      $("paneDetalhes").classList.toggle("active", !isFiltros);
-    }
-
     function statusTag(status){
       if(status==="executada") return `<span class="tag">Executada</span>`;
       if(status==="problemas") return `<span class="tag warn">Problemas</span>`;
@@ -980,7 +1007,6 @@ ${error.message}`
       if(!autor){ alert("Informe seu nome."); return; }
       if(!texto){ alert("Escreva a nota."); return; }
 
-      // NOVO: confirmação ao marcar como energizada (conclusão)
       if(status === "energizada"){
         const ok = confirm("Confirmar: esta obra foi ENERGIZADA e será movida para 'Concluídas'?");
         if(!ok) return;
@@ -992,9 +1018,7 @@ ${error.message}`
 
       $("nTexto").value = "";
       await loadNotes();
-
-      // Recarrega obras para refletir a conclusão (trigger marca obras.concluida=true)
-      await loadAll();
+      await loadAll(); // reflete conclusão via trigger
     }
 
     function openWhatsModal(){
@@ -1040,7 +1064,7 @@ ${error.message}`
       if(d2 < d1) return "A data final precisa ser maior ou igual à inicial.";
       if(!basesSelected.length) return "Selecione ao menos uma base.";
 
-      // Mantém WhatsApp só das ATIVAS (não concluídas), para não poluir
+      // WhatsApp só das ativas
       const inRange = allRows
         .filter(r => !r.concluida)
         .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
@@ -1104,28 +1128,8 @@ ${error.message}`
       $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value);
     }
 
-    // NOVO: alterna modo e UI
-    function setMode(newMode){
-      mode = newMode;
-      $("tabConcluidas").classList.toggle("active", mode === "concluidas");
-      // dica visual: quando estiver em concluídas, desliga a regra +5 dias no texto
-      $("ruleText").innerHTML = (mode === "concluidas")
-        ? `Mostrando <b>somente obras concluídas</b> (marcadas ao salvar nota como <b>Energizada</b>).`
-        : `Regras: mostra obras com <b>prazo final</b> na data escolhida. Se não houver, mostra as <b>5 mais próximas dentro de 5 dias</b>, separadas por Base.`;
-      render();
-    }
-
-    function setActiveTab(tab){
-      const isFiltros = tab === "filtros";
-      $("tabFiltros").classList.toggle("active", isFiltros);
-      $("tabDetalhes").classList.toggle("active", !isFiltros);
-      $("paneFiltros").classList.toggle("active", isFiltros);
-      $("paneDetalhes").classList.toggle("active", !isFiltros);
-    }
-
     (function init(){
       setToday();
-      setActiveTab("filtros");
 
       $("btnReload").addEventListener("click", guardAndRun);
       $("btnHoje").addEventListener("click", ()=>{ setToday(); render(); });
@@ -1135,10 +1139,9 @@ ${error.message}`
       $("fMunicipio").addEventListener("change", render);
       $("fCriterio").addEventListener("change", render);
 
-      $("tabFiltros").addEventListener("click", ()=> setActiveTab("filtros"));
-      $("tabDetalhes").addEventListener("click", ()=> setActiveTab("detalhes"));
+      $("tabFiltros").addEventListener("click", ()=>{ /* só UI */ });
+      $("tabDetalhes").addEventListener("click", ()=>{ /* só UI */ });
 
-      // NOVO: Concluídas
       $("tabConcluidas").addEventListener("click", ()=>{
         setMode(mode === "concluidas" ? "ativas" : "concluidas");
       });
@@ -1164,6 +1167,7 @@ ${error.message}`
       $("btnLogout").addEventListener("click", logout);
       $("btnDeniedLogout").addEventListener("click", logout);
 
+      // Não faz resend aqui. Só revalida.
       sb.auth.onAuthStateChange((_event, _session) => { guardAndRun(); });
 
       guardAndRun();
