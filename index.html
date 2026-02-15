@@ -321,6 +321,13 @@
         <div class="pill" id="todayPill">Data: --/--/----</div>
         <div class="pill">Versão: VFinal+Agente</div>
       </div>
+
+      <!-- Auth UI -->
+      <div class="badgeRow" style="gap:8px">
+        <div class="pill" id="authPill" style="display:none">🔒 Não autenticado</div>
+        <button class="btn secondary" id="btnLogout" style="display:none">Logout</button>
+      </div>
+
       <button class="btn secondary" id="btnReload">Recarregar</button>
     </div>
   </header>
@@ -488,6 +495,54 @@
     </div>
   </div>
 
+  <!-- Overlay Login (obrigatório) -->
+  <div class="overlay" id="overlayLogin">
+    <div class="modal" style="width:min(560px,100%)">
+      <div class="modalHead">
+        <div>
+          <h3>Login</h3>
+          <div class="muted">Acesso restrito • apenas <b>@neoenergia.com</b> • link mágico (sem senha)</div>
+        </div>
+      </div>
+      <div class="modalBody">
+        <div class="field">
+          <label>E-mail corporativo</label>
+          <input id="loginEmail" type="email" placeholder="nome.sobrenome@neoenergia.com" autocomplete="email" />
+        </div>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn" id="btnSendMagic">Enviar link</button>
+        </div>
+        <div class="rule" id="loginMsg" style="padding:10px 0 0 0">
+          Você receberá um e-mail com o link de acesso.
+        </div>
+      </div>
+      <div class="modalFoot">
+        <button class="btn secondary" id="btnLoginHelp" title="Dica">Dica</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay Pendente -->
+  <div class="overlay" id="overlayPending">
+    <div class="modal" style="width:min(560px,100%)">
+      <div class="modalHead">
+        <div>
+          <h3>Aguardando aprovação</h3>
+          <div class="muted">Seu acesso foi registrado, mas precisa ser liberado pelo administrador.</div>
+        </div>
+      </div>
+      <div class="modalBody">
+        <div class="pill" id="pendingPill">📩 Usuário: —</div>
+        <div class="rule" style="padding:10px 0 0 0">
+          Assim que aprovado, recarregue a página (F5).
+        </div>
+      </div>
+      <div class="modalFoot">
+        <button class="btn secondary" id="btnPendingLogout">Logout</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -592,11 +647,121 @@
       box.textContent = "";
     }
 
+    // ========= AUTH + APPROVAL =========
+    function show(el, on){ el.style.display = on ? "flex" : "none"; }
+    function showInline(el, on){ el.style.display = on ? "inline-flex" : "none"; }
+
+    function setAuthUI(email){
+      const pill = $("authPill");
+      const logout = $("btnLogout");
+      if(email){
+        pill.textContent = "✅ " + email;
+        showInline(pill, true);
+        showInline(logout, true);
+      }else{
+        pill.textContent = "🔒 Não autenticado";
+        showInline(pill, true);
+        showInline(logout, false);
+      }
+    }
+
+    async function sendMagicLink(){
+      const email = ($("loginEmail").value || "").trim().toLowerCase();
+      const msg = $("loginMsg");
+
+      if(!email.endsWith("@neoenergia.com")){
+        msg.textContent = "Use apenas e-mail corporativo @neoenergia.com.";
+        msg.style.color = "var(--warn)";
+        return;
+      }
+
+      // Redirect exato pro GitHub Pages atual (sem query/hash)
+      const redirectTo = window.location.origin + window.location.pathname;
+
+      msg.textContent = "Enviando link...";
+      msg.style.color = "var(--muted)";
+
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: redirectTo }
+      });
+
+      if(error){
+        msg.textContent = "Erro: " + error.message;
+        msg.style.color = "var(--danger)";
+        return;
+      }
+
+      msg.textContent = "Link enviado! Verifique seu e-mail (e spam).";
+      msg.style.color = "var(--accent)";
+    }
+
+    async function logout(){
+      await sb.auth.signOut();
+      setAuthUI(null);
+      show($("overlayPending"), false);
+      show($("overlayLogin"), true);
+    }
+
+    async function checkApprovalAndRun(){
+      clearError();
+
+      const { data: { session } } = await sb.auth.getSession();
+      const email = session?.user?.email || null;
+
+      if(!session){
+        setAuthUI(null);
+        show($("overlayPending"), false);
+        show($("overlayLogin"), true);
+        return;
+      }
+
+      setAuthUI(email);
+
+      // Confere aprovação (policy permite SELECT do próprio registro)
+      const { data, error } = await sb
+        .from("user_access")
+        .select("is_approved,email")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if(error){
+        showError(
+`Falha ao verificar aprovação (tabela user_access).
+
+${error.message}
+
+Verifique:
+- Trigger em auth.users criando user_access
+- Policy user_access_select_own (SELECT own)
+- RLS habilitado`
+        );
+        show($("overlayLogin"), false);
+        show($("overlayPending"), true);
+        $("pendingPill").textContent = "📩 Usuário: " + (email || "—");
+        return;
+      }
+
+      if(!data?.is_approved){
+        show($("overlayLogin"), false);
+        show($("overlayPending"), true);
+        $("pendingPill").textContent = "📩 Usuário: " + (data?.email || email || "—");
+        return;
+      }
+
+      // aprovado => libera
+      show($("overlayLogin"), false);
+      show($("overlayPending"), false);
+
+      // Só agora carrega dados
+      await loadAll();
+    }
+
     async function detectColumns(){
       const tests = [
         { key:"COL_BASE", candidates:["base_oper_prog", "BASE_OPER_PROG", '"BASE_OPER_PROG"'] },
         { key:"COL_PROJ", candidates:["projeto", "PROJETO", '"PROJETO"'] },
-        { key:"COL_AGENT", candidates:["agente_responsavel", "AGENTE_RESPONSAVEL", '"AGENTE_RESPONSAVEL"'] }, // <<< NOVO
+        { key:"COL_AGENT", candidates:["agente_responsavel", "AGENTE_RESPONSAVEL", '"AGENTE_RESPONSAVEL"'] },
         { key:"COL_PRAZO", candidates:["PREVISAO_EXECUCAO_FIM", "previsao_execucao_fim"] },
         { key:"COL_MUN", candidates:["municipio", "MUNICIPIO"] },
         { key:"COL_CRIT", candidates:["criterio", "CRITERIO"] },
@@ -639,7 +804,7 @@
       const selectCols = [
         `${COL_NOTA}`,
         `${COL_PROJ}`,
-        `${COL_AGENT}`, // <<< NOVO
+        `${COL_AGENT}`,
         `${COL_BASE}`,
         `${COL_MUN}`,
         `${COL_CRIT}`,
@@ -658,7 +823,8 @@
 Detalhe: ${error.message}
 
 Verifique:
-- RLS/policies da tabela obras (SELECT para anon)
+- RLS/policies da tabela obras (SELECT só para aprovado)
+- Usuário está logado e aprovado
 - Nome da tabela e colunas`
         );
         return;
@@ -768,7 +934,7 @@ Verifique:
       const fixedCols = [
         { k: COL_NOTA, label:"Nota", cls:"nowrap" },
         { k: COL_PROJ, label:"Projeto", cls:"nowrap" },
-        { k: COL_AGENT, label:"Agente responsável", cls:"nowrap" }, // <<< NOVO
+        { k: COL_AGENT, label:"Agente responsável", cls:"nowrap" },
         { k: COL_PRAZO, label:"Prazo final", cls:"nowrap" },
         { k: "titulo", label:"Título", cls:"" },
         { k: COL_MUN, label:"Município", cls:"nowrap" },
@@ -870,7 +1036,7 @@ Verifique:
 
       const { data, error } = await sb
         .from("notes")
-        .select("id, nota, autor, texto, status, created_at")
+        .select("id, nota, autor, texto, status, created_at")  // (auditoria fica no banco: user_id/user_email)
         .eq("nota", currentNotaKey)
         .order("created_at", { ascending:false });
 
@@ -907,8 +1073,10 @@ Verifique:
       if(!autor){ alert("Informe seu nome."); return; }
       if(!texto){ alert("Escreva a nota."); return; }
 
+      // Auditoria (user_id/user_email) será preenchida por trigger no banco
       const payload = { nota: currentNotaKey, autor, texto, status };
       const { error } = await sb.from("notes").insert(payload);
+
       if(error){ alert("Erro ao salvar nota: " + error.message); return; }
 
       $("nTexto").value = "";
@@ -1006,11 +1174,10 @@ Verifique:
           for(const r of rows){
             const nota = normalizeNota(getField(r, COL_NOTA)) || "—";
             const proj = getField(r, COL_PROJ) || "—";
-            const agente = getField(r, COL_AGENT) || "—"; // <<< NOVO
+            const agente = getField(r, COL_AGENT) || "—";
             const titulo = getField(r, "titulo") || "—";
             const mun = getField(r, COL_MUN) || "—";
             const crit = getField(r, COL_CRIT) || "—";
-            // inclui agente no texto do WhatsApp
             msg += `- Nota ${nota} • ${proj} • Agente: ${agente} • ${mun} • ${crit} • ${titulo}\n`;
           }
         }
@@ -1054,7 +1221,7 @@ Verifique:
       setToday();
       setActiveTab("filtros");
 
-      $("btnReload").addEventListener("click", loadAll);
+      $("btnReload").addEventListener("click", checkApprovalAndRun);
       $("btnHoje").addEventListener("click", ()=>{ setToday(); render(); });
 
       $("fData").addEventListener("change", ()=>{ $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value); render(); });
@@ -1088,7 +1255,21 @@ Verifique:
       $("btnSalvarNota").addEventListener("click", saveNote);
       $("btnRecarregarNotas").addEventListener("click", loadNotes);
 
-      loadAll();
+      // Auth buttons
+      $("btnSendMagic").addEventListener("click", sendMagicLink);
+      $("btnLogout").addEventListener("click", logout);
+      $("btnPendingLogout").addEventListener("click", logout);
+      $("btnLoginHelp").addEventListener("click", ()=>{
+        alert("Dica: confirme no Supabase Auth a 'Site URL' e 'Redirect URLs' com o link do GitHub Pages. Se não receber o e-mail, verifique spam/lixo eletrônico.");
+      });
+
+      // Reagir a mudanças de sessão (ex.: magic link)
+      sb.auth.onAuthStateChange((_event, _session) => {
+        checkApprovalAndRun();
+      });
+
+      // Start: trava até aprovação
+      checkApprovalAndRun();
     })();
   </script>
 </body>
