@@ -66,7 +66,6 @@
       transition:.15s transform ease, .15s opacity ease;
     }
     .btn:hover{transform:translateY(-1px)}
-    .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
     .btn.secondary{
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.12);
@@ -76,7 +75,7 @@
     .panel{
       background:linear-gradient(180deg, rgba(16,56,43,.72), rgba(10,34,26,.66));
       border:1px solid rgba(232,255,244,.12);
-      border-radius:18px;
+      border-radius:var(--radius);
       box-shadow:var(--shadow);
       overflow:hidden;
     }
@@ -101,8 +100,10 @@
       background:rgba(124,252,184,.14);
     }
     .actions{display:flex;gap:8px;flex-wrap:wrap}
+
     .pane{display:none;}
     .pane.active{display:block;}
+
     .filters{
       padding:14px 16px;
       display:grid;
@@ -129,9 +130,11 @@
       padding:10px 12px;border-radius:14px;
       border:1px solid rgba(232,255,244,.12);
       background:rgba(0,0,0,.12);
-      cursor:pointer; user-select:none;
+      cursor:pointer;
+      user-select:none;
     }
     .toggle input{width:auto}
+
     .error{
       margin:0 16px 16px 16px;
       padding:12px 14px;
@@ -143,8 +146,18 @@
       font-family:var(--mono);
       font-size:12px;
     }
-    .gridBases{padding:14px 16px 18px 16px;display:grid;grid-template-columns:1fr;gap:12px;}
-    .baseBlock{border:1px solid rgba(232,255,244,.12);background:rgba(0,0,0,.10);border-radius:16px;overflow:hidden;}
+    .gridBases{
+      padding:14px 16px 18px 16px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    .baseBlock{
+      border:1px solid rgba(232,255,244,.12);
+      background:rgba(0,0,0,.10);
+      border-radius:16px;
+      overflow:hidden;
+    }
     .baseHead{
       padding:12px 14px;
       display:flex;justify-content:space-between;align-items:center;
@@ -154,10 +167,18 @@
     .baseHead .name{font-weight:700}
     .baseHead .count{color:var(--muted);font-size:13px}
     table{width:100%;border-collapse:collapse;font-size:13px;}
-    th, td{padding:10px 10px;border-bottom:1px solid rgba(232,255,244,.10);vertical-align:top;}
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(232,255,244,.10);
+      vertical-align:top;
+    }
     th{
-      text-align:left;color:var(--muted);font-weight:600;
-      background:rgba(0,0,0,.10);position:sticky; top:0;z-index:1;
+      text-align:left;
+      color:var(--muted);
+      font-weight:600;
+      background:rgba(0,0,0,.10);
+      position:sticky; top:0;
+      z-index:1;
     }
     tr:hover td{background:rgba(124,252,184,.06)}
     .nowrap{white-space:nowrap}
@@ -167,22 +188,35 @@
       padding:4px 10px;border-radius:999px;
       background:rgba(124,252,184,.12);
       border:1px solid rgba(124,252,184,.22);
-      font-size:12px;white-space:nowrap;
+      font-size:12px;
+      white-space:nowrap;
     }
     .tag.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.25)}
     .tag.danger{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.25)}
     .tag.done{background:rgba(124,252,184,.16);border-color:rgba(124,252,184,.32)}
+
     .linkBtn{
-      cursor:pointer;padding:8px 10px;border-radius:12px;
+      cursor:pointer;
+      padding:8px 10px;border-radius:12px;
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.12);
-      color:var(--text);font-size:12px;
+      color:var(--text);
+      font-size:12px;
     }
-    .footer{max-width:1200px;margin:16px auto 0 auto;text-align:center;color:var(--muted);font-size:12px;}
+    .footer{
+      max-width:1200px;margin:16px auto 0 auto;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+    }
+
     .overlay{
-      position:fixed;inset:0;background:rgba(0,0,0,.55);
-      display:none;align-items:center;justify-content:center;
-      padding:18px;z-index:9999;
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;justify-content:center;
+      padding:18px;
+      z-index:9999;
     }
     .modal{
       width:min(760px, 100%);
@@ -193,40 +227,63 @@
       overflow:hidden;
     }
     .modalHead{
-      padding:12px 14px;border-bottom:1px solid var(--line);
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
       display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
     }
     .modalHead h3{margin:0;font-size:16px}
     .modalBody{padding:14px}
-    .modalGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .modalGrid{
+      display:grid;grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
     .modalGrid .field:last-child{grid-column:1/-1}
     textarea{
-      width:100%;min-height:110px;resize:vertical;
+      width:100%;
+      min-height:110px;
+      resize:vertical;
       background:rgba(0,0,0,.20);
       border:1px solid rgba(232,255,244,.14);
       color:var(--text);
-      padding:12px 12px;border-radius:14px;outline:none;
+      padding:12px 12px;
+      border-radius:14px;
+      outline:none;
       font-family:var(--sans);
     }
-    .notesList{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;}
+    .notesList{
+      margin-top:14px;
+      border-top:1px solid var(--line);
+      padding-top:12px;
+    }
     .noteItem{
       border:1px solid rgba(232,255,244,.12);
       background:rgba(0,0,0,.12);
       border-radius:14px;
-      padding:10px 12px;margin-top:10px;
+      padding:10px 12px;
+      margin-top:10px;
     }
     .noteMeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .noteMeta .who{font-weight:700}
     .noteMeta .when{color:var(--muted);font-size:12px}
     .noteText{margin-top:8px;color:var(--text);white-space:pre-wrap}
-    .modalFoot{display:flex;gap:10px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--line);flex-wrap:wrap;}
-    .checkList{display:grid;grid-template-columns: 1fr 1fr;gap:8px;padding:10px 0 0 0;}
+    .modalFoot{
+      display:flex;gap:10px;justify-content:flex-end;
+      padding:12px 14px;border-top:1px solid var(--line);
+      flex-wrap:wrap;
+    }
+    .checkList{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      padding:10px 0 0 0;
+    }
     .checkItem{
       display:flex;gap:10px;align-items:center;
       padding:10px 12px;border-radius:14px;
       border:1px solid rgba(232,255,244,.12);
       background:rgba(0,0,0,.12);
     }
+
     @media (max-width:900px){
       .filters{grid-template-columns:1fr}
       .modalGrid{grid-template-columns:1fr}
@@ -247,7 +304,7 @@
     <div class="rightTop">
       <div class="badgeRow">
         <div class="pill" id="todayPill">Data: --/--/----</div>
-        <div class="pill">Versão: VFinal+Agente</div>
+        <div class="pill">Versão: LGPD+Senha</div>
       </div>
 
       <div class="badgeRow" style="gap:8px">
@@ -263,9 +320,9 @@
     <div class="panel">
       <div class="panelHead">
         <div class="tabs">
-          <div class="tab active" id="tabFiltros" title="Mostrar/ocultar filtros">Filtros</div>
-          <div class="tab" id="tabDetalhes" title="Configurações de colunas">Detalhes</div>
-          <div class="tab" id="tabConcluidas" title="Mostrar apenas obras concluídas">Concluídas</div>
+          <div class="tab active" id="tabFiltros">Ativas</div>
+          <div class="tab" id="tabConcluidas">Concluídas</div>
+          <div class="tab" id="tabDetalhes">Detalhes</div>
           <button class="btn" id="btnWhats">Exportar WhatsApp</button>
         </div>
         <div class="actions">
@@ -321,12 +378,11 @@
       </div>
 
       <div id="errBox" class="error" style="display:none"></div>
-
       <div class="gridBases" id="gridBases"></div>
     </div>
 
     <div class="footer">
-      UTEP Nordeste • Atualiza automaticamente quando você fizer commit no GitHub Pages.
+      UTEP Nordeste • GitHub Pages • Acesso controlado (LGPD).
     </div>
   </div>
 
@@ -430,37 +486,44 @@
       <div class="modalHead">
         <div>
           <h3>Login</h3>
-          <div class="muted">Acesso restrito • link mágico (sem senha)</div>
+          <div class="muted">Acesso restrito • e-mail + senha</div>
         </div>
       </div>
       <div class="modalBody">
-        <div class="field">
-          <label>Seu e-mail</label>
-          <input id="loginEmail" type="email" autocomplete="email" placeholder="seuemail@dominio.com" />
+        <div class="modalGrid">
+          <div class="field" style="grid-column:1/-1">
+            <label>E-mail</label>
+            <input id="loginEmail" type="email" autocomplete="email" placeholder="seuemail@neoenergia.com" />
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label>Senha</label>
+            <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" />
+          </div>
         </div>
         <div class="actions" style="margin-top:10px">
-          <button class="btn" id="btnSendMagic">Enviar link</button>
+          <button class="btn" id="btnSignIn">Entrar</button>
+          <button class="btn secondary" id="btnSignUp">Criar conta</button>
         </div>
         <div class="rule" id="loginMsg" style="padding:10px 0 0 0">
-          Você receberá um e-mail com o link de acesso.
+          Use seu e-mail corporativo. Se sua conta ainda não estiver aprovada, o acesso ficará bloqueado.
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Overlay Não autorizado -->
+  <!-- Overlay Não aprovado -->
   <div class="overlay" id="overlayDenied">
     <div class="modal" style="width:min(560px,100%)">
       <div class="modalHead">
         <div>
-          <h3>Sem permissão</h3>
-          <div class="muted">Este usuário não tem acesso ao dashboard.</div>
+          <h3>Acesso bloqueado</h3>
+          <div class="muted">Conta não aprovada ou sem permissão.</div>
         </div>
       </div>
       <div class="modalBody">
-        <div class="pill">🚫 Acesso negado</div>
+        <div class="pill">🚫 Sem acesso aos dados</div>
         <div class="rule" style="padding:10px 0 0 0">
-          Faça logout e entre com um e-mail autorizado.
+          Se você acabou de criar a conta, aguarde aprovação do administrador.
         </div>
       </div>
       <div class="modalFoot">
@@ -469,7 +532,7 @@
     </div>
   </div>
 
-  <!-- Supabase -->
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -477,12 +540,9 @@
     const SUPABASE_URL = "https://yyfhnuafwzeglwcpnmkd.supabase.co".trim();
     const SUPABASE_ANON_KEY = "sb_publishable_7rmfNL9N6limSSFxFcl2Og_MV9xkbjx".trim();
 
-    // Regras de quem pode RECEBER link (UI não mostra isso)
-    const ADMIN_EMAIL = "mamutevitor@gmail.com";
+    // Domínio permitido (frontend é só UX; segurança real é RLS + trigger SQL)
     const ALLOW_DOMAIN = "@neoenergia.com";
-
-    // GHP: use a URL final (não origin dinâmico) pra evitar redirect quebrado
-    const REDIRECT_TO = "https://thowosken.github.io/utep-dashboard/";
+    const ALSO_ALLOW_ADMIN = "mamutevitor@gmail.com"; // opcional (igual ao SQL)
 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -495,25 +555,17 @@
     let COL_PROJ  = "projeto";
     let COL_AGENT = "agente_responsavel";
 
-    // estado
+    // toggles
     let showExtras = false;
+    let mode = "ativas"; // ativas | concluidas
+
+    // estado
     let allRows = [];
     let bases = [];
     let municipios = [];
     let criterios = [];
-
-    // modo
-    let mode = "ativas"; // "ativas" | "concluidas"
-
-    // modal state
     let currentNotaKey = null;
 
-    // OTP anti-spam
-    let lastOtpAt = 0;
-    const OTP_COOLDOWN_MS = 60_000; // 1 min
-    let otpInFlight = false;
-
-    // helpers
     const $ = (id) => document.getElementById(id);
     function show(el, on){ el.style.display = on ? "flex" : "none"; }
     function showInline(el, on){ el.style.display = on ? "inline-flex" : "none"; }
@@ -594,64 +646,71 @@
       }
     }
 
-    function isAllowedToReceiveLink(email){
-      const e = (email||"").toLowerCase();
-      return (e === ADMIN_EMAIL.toLowerCase()) || e.endsWith(ALLOW_DOMAIN);
+    function emailAllowedUX(email){
+      const e = (email||"").trim().toLowerCase();
+      return e.endsWith(ALLOW_DOMAIN) || e === ALSO_ALLOW_ADMIN.toLowerCase();
     }
 
-    async function sendMagicLink(){
-      if(otpInFlight) return;
-      const btn = $("btnSendMagic");
+    async function signIn(){
+      const email = ($("loginEmail").value||"").trim().toLowerCase();
+      const pass  = ($("loginPass").value||"").trim();
       const msg = $("loginMsg");
 
-      const email = ($("loginEmail").value || "").trim().toLowerCase();
-
-      // não revelar regras: mensagem genérica
-      if(!isAllowedToReceiveLink(email)){
-        msg.textContent = "E-mail não permitido para login.";
+      if(!email || !pass){
+        msg.textContent = "Informe e-mail e senha.";
+        msg.style.color = "var(--warn)";
+        return;
+      }
+      if(!emailAllowedUX(email)){
+        msg.textContent = "E-mail não permitido.";
         msg.style.color = "var(--warn)";
         return;
       }
 
-      const now = Date.now();
-      if(now - lastOtpAt < OTP_COOLDOWN_MS){
-        msg.textContent = "Aguarde um pouco antes de pedir outro link.";
-        msg.style.color = "var(--warn)";
-        return;
-      }
-
-      otpInFlight = true;
-      btn.disabled = true;
-
-      msg.textContent = "Enviando link…";
+      msg.textContent = "Entrando…";
       msg.style.color = "var(--muted)";
 
-      try{
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: REDIRECT_TO }
-        });
-
-        if(error){
-          const m = (error.message || "").toLowerCase();
-          if(m.includes("rate limit")){
-            msg.textContent = "Limite de envio atingido. Verifique seu e-mail (e spam) e tente novamente mais tarde.";
-            msg.style.color = "var(--warn)";
-          }else{
-            msg.textContent = "Erro ao enviar link.";
-            msg.style.color = "var(--danger)";
-          }
-          return;
-        }
-
-        lastOtpAt = Date.now();
-        msg.textContent = "Link enviado! Verifique seu e-mail (e spam).";
-        msg.style.color = "var(--accent)";
-      } finally {
-        otpInFlight = false;
-        // reabilita em 15s pra evitar spam
-        setTimeout(()=>{ btn.disabled = false; }, 15000);
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if(error){
+        msg.textContent = "Falha no login: " + error.message;
+        msg.style.color = "var(--danger)";
+        return;
       }
+    }
+
+    async function signUp(){
+      const email = ($("loginEmail").value||"").trim().toLowerCase();
+      const pass  = ($("loginPass").value||"").trim();
+      const msg = $("loginMsg");
+
+      if(!email || !pass){
+        msg.textContent = "Informe e-mail e senha.";
+        msg.style.color = "var(--warn)";
+        return;
+      }
+      if(!emailAllowedUX(email)){
+        msg.textContent = "E-mail não permitido.";
+        msg.style.color = "var(--warn)";
+        return;
+      }
+      if(pass.length < 8){
+        msg.textContent = "Use uma senha com pelo menos 8 caracteres.";
+        msg.style.color = "var(--warn)";
+        return;
+      }
+
+      msg.textContent = "Criando conta…";
+      msg.style.color = "var(--muted)";
+
+      const { error } = await sb.auth.signUp({ email, password: pass });
+      if(error){
+        msg.textContent = "Falha ao criar conta: " + error.message;
+        msg.style.color = "var(--danger)";
+        return;
+      }
+
+      msg.textContent = "Conta criada. Se exigir aprovação, aguarde liberação.";
+      msg.style.color = "var(--accent)";
     }
 
     async function logout(){
@@ -661,42 +720,36 @@
       show($("overlayLogin"), true);
     }
 
-    // Checa sessão + e-mail autorizado (ADMIN) + SELECT mínimo (RLS)
-    async function guardAndRun(){
-      clearError();
-
+    async function checkApprovedOrBlock(){
       const { data: { session } } = await sb.auth.getSession();
-      const email = session?.user?.email || null;
-
       if(!session){
         setAuthUI(false);
         show($("overlayDenied"), false);
         show($("overlayLogin"), true);
-        return;
+        return false;
       }
 
       setAuthUI(true);
 
-      // acesso ao dashboard: somente ADMIN (você)
-      if((email||"").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+      // Checa aprovação via RPC (não expõe e-mail)
+      const { data, error } = await sb.rpc("me_status");
+      if(error || !data || !data.length){
+        // Se não existir registro (ex: trigger não rodou), bloqueia
         show($("overlayLogin"), false);
         show($("overlayDenied"), true);
-        return;
+        return false;
       }
 
-      // teste RLS real
-      const { error } = await sb.from("obras").select("nota", { count:"exact" }).limit(1);
-      if(error){
-        showError(`Você está logado, mas o RLS bloqueou o acesso.\n\n${error.message}`);
+      const st = data[0];
+      if(!st.aprovado){
         show($("overlayLogin"), false);
         show($("overlayDenied"), true);
-        return;
+        return false;
       }
 
       show($("overlayLogin"), false);
       show($("overlayDenied"), false);
-
-      await loadAll();
+      return true;
     }
 
     async function detectColumns(){
@@ -754,7 +807,7 @@
       const { data, error } = await sb.from("obras").select(selectCols).limit(5000);
 
       if(error){
-        showError(`Não consegui carregar dados da tabela 'obras'.\n\nDetalhe: ${error.message}`);
+        showError(`Não consegui carregar 'obras'.\n\n${error.message}`);
         return;
       }
 
@@ -787,16 +840,19 @@
       $("fCriterio").innerHTML = `<option value="">Todos</option>` + criterios.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
     }
 
-    function setMode(newMode){
-      mode = newMode;
-      $("tabConcluidas").classList.toggle("active", mode === "concluidas");
-      $("ruleText").innerHTML = (mode === "concluidas")
-        ? `Mostrando <b>somente obras concluídas</b> (marcadas ao salvar nota como <b>Energizada</b>).`
+    function setMode(m){
+      mode = m;
+      $("tabFiltros").classList.toggle("active", mode==="ativas");
+      $("tabConcluidas").classList.toggle("active", mode==="concluidas");
+      $("ruleText").innerHTML = (mode==="concluidas")
+        ? `Mostrando <b>Concluídas</b> (marcadas automaticamente quando nota = <b>Energizada</b>).`
         : `Regras: mostra obras com <b>prazo final</b> na data escolhida. Se não houver, mostra as <b>5 mais próximas dentro de 5 dias</b>, separadas por Base.`;
       render();
     }
 
     function render(){
+      clearError();
+
       const chosenDate = $("fData").value ? new Date($("fData").value + "T00:00:00") : null;
       const fBase = $("fBase").value;
       const fMun = $("fMunicipio").value;
@@ -804,17 +860,16 @@
 
       let rows = allRows.slice();
 
-      if(mode === "concluidas"){
-        rows = rows.filter(r => !!r.concluida);
-      } else {
-        rows = rows.filter(r => !r.concluida);
-      }
+      // filtro concluidas
+      if(mode==="concluidas") rows = rows.filter(r => !!r.concluida);
+      else rows = rows.filter(r => !r.concluida);
 
       if(fBase) rows = rows.filter(r => (getField(r, COL_BASE) ?? "").toString().trim() === fBase);
       if(fMun) rows = rows.filter(r => (getField(r, COL_MUN) ?? "").toString().trim() === fMun);
       if(fCrit) rows = rows.filter(r => (getField(r, COL_CRIT) ?? "").toString().trim() === fCrit);
 
       const basesToShow = (fBase ? [fBase] : (bases.length ? bases : ["(Sem base)"]));
+
       const container = $("gridBases");
       container.innerHTML = "";
 
@@ -824,15 +879,8 @@
         let showList = [];
         let label = "";
 
-        if(mode === "concluidas"){
-          showList = baseRows.slice().sort((a,b)=>{
-            const da = parseDateOnly(getField(a, COL_PRAZO));
-            const db = parseDateOnly(getField(b, COL_PRAZO));
-            if(!da && !db) return 0;
-            if(!da) return 1;
-            if(!db) return -1;
-            return da - db;
-          });
+        if(mode==="concluidas"){
+          showList = baseRows.slice();
           label = `Concluídas (${showList.length})`;
         } else {
           if(chosenDate){
@@ -894,8 +942,8 @@
         { k: "status", label:"Status", cls:"nowrap" },
       ];
       const extraCols = [{ k: "gerencia", label:"Gerência", cls:"nowrap" }];
-      const cols = showExtras ? fixedCols.concat(extraCols) : fixedCols;
 
+      const cols = showExtras ? fixedCols.concat(extraCols) : fixedCols;
       thead.innerHTML = `<tr>${cols.map(c=>`<th class="${c.cls||""}">${escapeHtml(c.label)}</th>`).join("")}<th class="nowrap">Ações</th></tr>`;
       table.appendChild(thead);
 
@@ -906,6 +954,15 @@
         tr.innerHTML = `<td colspan="${cols.length+1}" class="muted">Nenhuma obra para exibir nesta base.</td>`;
         tbody.appendChild(tr);
       }else{
+        list = list.slice().sort((a,b)=>{
+          const da = parseDateOnly(getField(a,COL_PRAZO));
+          const db = parseDateOnly(getField(b,COL_PRAZO));
+          if(!da && !db) return 0;
+          if(!da) return 1;
+          if(!db) return -1;
+          return da - db;
+        });
+
         for(const row of list){
           const tr = document.createElement("tr");
           const cells = cols.map(c=>{
@@ -1008,7 +1065,7 @@
       if(!texto){ alert("Escreva a nota."); return; }
 
       if(status === "energizada"){
-        const ok = confirm("Confirmar: esta obra foi ENERGIZADA e será movida para 'Concluídas'?");
+        const ok = confirm("Confirmar: esta obra foi ENERGIZADA e será movida para Concluídas?");
         if(!ok) return;
       }
 
@@ -1018,7 +1075,7 @@
 
       $("nTexto").value = "";
       await loadNotes();
-      await loadAll(); // reflete conclusão via trigger
+      await loadAll(); // reflete concluída via trigger
     }
 
     function openWhatsModal(){
@@ -1031,12 +1088,15 @@
 
     function buildWhatsBases(){
       const wrap = $("wBases");
+      if(!wrap) return;
       wrap.innerHTML = "";
+
       const list = (bases && bases.length) ? bases : [];
       if(!list.length){
         wrap.innerHTML = `<div class="muted">Carregue os dados primeiro.</div>`;
         return;
       }
+
       for(const b of list){
         const id = "wb_" + b.replace(/\W+/g,"_");
         const div = document.createElement("label");
@@ -1058,20 +1118,27 @@
     function buildWhatsTextRange(fromDate, toDate, basesSelected){
       const d1 = new Date(fromDate + "T00:00:00");
       const d2 = new Date(toDate + "T00:00:00");
-      d1.setHours(0,0,0,0); d2.setHours(0,0,0,0);
+      d1.setHours(0,0,0,0);
+      d2.setHours(0,0,0,0);
 
-      if(String(d1)==="Invalid Date" || String(d2)==="Invalid Date") return "Escolha datas válidas.";
-      if(d2 < d1) return "A data final precisa ser maior ou igual à inicial.";
-      if(!basesSelected.length) return "Selecione ao menos uma base.";
+      if(String(d1)==="Invalid Date" || String(d2)==="Invalid Date"){
+        return "Escolha datas válidas.";
+      }
+      if(d2 < d1){
+        return "A data final precisa ser maior ou igual à inicial.";
+      }
+      if(!basesSelected.length){
+        return "Selecione ao menos uma base.";
+      }
 
-      // WhatsApp só das ativas
+      // WhatsApp: só ATIVAS (minimização)
       const inRange = allRows
         .filter(r => !r.concluida)
         .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
         .filter(x => x.d && x.d >= d1 && x.d <= d2)
         .filter(x => basesSelected.includes((getField(x.r, COL_BASE) ?? "").toString().trim()));
 
-      const map = new Map();
+      const map = new Map(); // dateKey -> Map(base -> rows)
       for(const x of inRange){
         const dateKey = fmtDateInput(x.d);
         if(!map.has(dateKey)) map.set(dateKey, new Map());
@@ -1083,7 +1150,9 @@
 
       const dateKeys = Array.from(map.keys()).sort((a,b)=>a.localeCompare(b));
       const header = `📌 Obras planejadas (${fmtDateBR(d1)} → ${fmtDateBR(d2)})`;
-      if(!dateKeys.length) return `${header}\n\nNenhuma obra encontrada no período para as bases selecionadas.`;
+      if(!dateKeys.length){
+        return `${header}\n\nNenhuma obra encontrada no período para as bases selecionadas.`;
+      }
 
       let msg = header + "\n";
       for(const dk of dateKeys){
@@ -1117,21 +1186,30 @@
     function sendWhats(){
       const txt = buildWhatsTextRange($("wDe").value, $("wAte").value, getSelectedWhatsBases());
       if(txt.startsWith("Escolha") || txt.startsWith("A data") || txt.startsWith("Selecione")){
-        alert(txt); return;
+        alert(txt);
+        return;
       }
       openWhatsWithText(txt);
     }
 
     function setToday(){
-      const now = new Date(); now.setHours(0,0,0,0);
+      const now = new Date();
+      now.setHours(0,0,0,0);
       $("fData").value = fmtDateInput(now);
       $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value);
     }
 
+    async function guard(){
+      const ok = await checkApprovedOrBlock();
+      if(!ok) return;
+      await loadAll();
+    }
+
     (function init(){
       setToday();
+      setMode("ativas");
 
-      $("btnReload").addEventListener("click", guardAndRun);
+      $("btnReload").addEventListener("click", guard);
       $("btnHoje").addEventListener("click", ()=>{ setToday(); render(); });
 
       $("fData").addEventListener("change", ()=>{ $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value); render(); });
@@ -1139,11 +1217,12 @@
       $("fMunicipio").addEventListener("change", render);
       $("fCriterio").addEventListener("change", render);
 
-      $("tabFiltros").addEventListener("click", ()=>{ /* só UI */ });
-      $("tabDetalhes").addEventListener("click", ()=>{ /* só UI */ });
-
-      $("tabConcluidas").addEventListener("click", ()=>{
-        setMode(mode === "concluidas" ? "ativas" : "concluidas");
+      $("tabFiltros").addEventListener("click", ()=> setMode("ativas"));
+      $("tabConcluidas").addEventListener("click", ()=> setMode("concluidas"));
+      $("tabDetalhes").addEventListener("click", ()=>{
+        const isFiltros = $("paneFiltros").classList.contains("active");
+        $("paneFiltros").classList.toggle("active", !isFiltros);
+        $("paneDetalhes").classList.toggle("active", isFiltros);
       });
 
       $("tShowExtras").addEventListener("change", (e)=>{ showExtras = e.target.checked; render(); });
@@ -1163,14 +1242,14 @@
       $("btnRecarregarNotas").addEventListener("click", loadNotes);
 
       // Auth
-      $("btnSendMagic").addEventListener("click", sendMagicLink);
+      $("btnSignIn").addEventListener("click", signIn);
+      $("btnSignUp").addEventListener("click", signUp);
       $("btnLogout").addEventListener("click", logout);
       $("btnDeniedLogout").addEventListener("click", logout);
 
-      // Não faz resend aqui. Só revalida.
-      sb.auth.onAuthStateChange((_event, _session) => { guardAndRun(); });
+      sb.auth.onAuthStateChange(()=> guard());
 
-      guardAndRun();
+      guard();
     })();
   </script>
 </body>
