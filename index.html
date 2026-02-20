@@ -146,6 +146,7 @@
       font-family:var(--mono);
       font-size:12px;
     }
+
     .gridBases{
       padding:14px 16px 18px 16px;
       display:grid;
@@ -194,7 +195,6 @@
     .tag.warn{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.25)}
     .tag.danger{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.25)}
     .tag.done{background:rgba(124,252,184,.16);border-color:rgba(124,252,184,.32)}
-
     .linkBtn{
       cursor:pointer;
       padding:8px 10px;border-radius:12px;
@@ -284,12 +284,43 @@
       background:rgba(0,0,0,.12);
     }
 
+    /* Admin */
+    .adminWrap{padding:14px 16px 18px 16px;}
+    .adminGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .adminCard{
+      border:1px solid rgba(232,255,244,.12);
+      background:rgba(0,0,0,.10);
+      border-radius:16px;
+      padding:12px 12px;
+    }
+    .adminCard h4{margin:0 0 8px 0;font-size:14px}
+    .adminCard .muted{font-size:12px}
+    .adminTableWrap{
+      margin-top:12px;
+      border:1px solid rgba(232,255,244,.12);
+      border-radius:16px;
+      overflow:auto;
+      max-height:520px;
+      background:rgba(0,0,0,.10);
+    }
+    .miniRow{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+      margin-top:10px;
+    }
+    .miniRow input[type="text"]{max-width:420px}
+    .chk{display:flex;gap:8px;align-items:center}
+    .small{font-size:12px;color:var(--muted)}
     @media (max-width:900px){
       .filters{grid-template-columns:1fr}
       .modalGrid{grid-template-columns:1fr}
       .checkList{grid-template-columns:1fr}
       header{flex-direction:column;align-items:flex-start}
       .rightTop{align-items:flex-start}
+      .adminGrid{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -304,7 +335,7 @@
     <div class="rightTop">
       <div class="badgeRow">
         <div class="pill" id="todayPill">Data: --/--/----</div>
-        <div class="pill">Versão: LGPD+Senha</div>
+        <div class="pill">Versão: LGPD+Admin</div>
       </div>
 
       <div class="badgeRow" style="gap:8px">
@@ -320,10 +351,14 @@
     <div class="panel">
       <div class="panelHead">
         <div class="tabs">
-          <div class="tab active" id="tabFiltros">Ativas</div>
+          <div class="tab active" id="tabAtivas">Ativas</div>
           <div class="tab" id="tabConcluidas">Concluídas</div>
           <div class="tab" id="tabDetalhes">Detalhes</div>
+
+          <button class="btn" id="btnEmail">Exportar E-mail</button>
           <button class="btn" id="btnWhats">Exportar WhatsApp</button>
+
+          <div class="tab" id="tabAdmin" style="display:none">Admin</div>
         </div>
         <div class="actions">
           <button class="btn secondary" id="btnHoje">Hoje</button>
@@ -374,6 +409,62 @@
             <input type="checkbox" id="tShowExtras" />
             Mostrar colunas extras (Gerência)
           </label>
+        </div>
+      </div>
+
+      <!-- Admin pane -->
+      <div class="pane" id="paneAdmin">
+        <div class="adminWrap">
+          <div class="adminGrid">
+            <div class="adminCard">
+              <h4>Marcar obras como concluídas</h4>
+              <div class="muted">Isso remove as obras da aba “Ativas”. (Admin pode marcar/desmarcar manualmente)</div>
+              <div class="miniRow">
+                <input id="admSearch" type="text" placeholder="Buscar por Nota, Projeto, Município, Base..." />
+                <label class="chk"><input id="admOnlyOpen" type="checkbox" checked /> Mostrar apenas não concluídas</label>
+              </div>
+              <div class="miniRow">
+                <button class="btn secondary" id="btnAdminReload">Recarregar admin</button>
+                <button class="btn secondary" id="btnAdminExportCsv">Exportar CSV (visão admin)</button>
+              </div>
+              <div class="small">Dica: marcar “concluída” aqui é útil quando faltou registrar “energizada” nas notas.</div>
+            </div>
+
+            <div class="adminCard">
+              <h4>Opções extras</h4>
+              <div class="muted">Atalhos de admin (sem expor e-mails no dashboard normal).</div>
+              <div class="miniRow">
+                <button class="btn secondary" id="btnAdminCopySummary">Copiar resumo (ativas)</button>
+                <button class="btn secondary" id="btnAdminCopyDone">Copiar resumo (concluídas)</button>
+              </div>
+              <div class="miniRow">
+                <button class="btn secondary" id="btnAdminPurgeCache">Limpar cache local</button>
+              </div>
+              <div class="small">
+                Se você estiver usando aprovação manual, dá pra adicionar um painel de “aprovar usuários”.
+                Se quiser, eu incluo na próxima versão.
+              </div>
+            </div>
+          </div>
+
+          <div class="adminTableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="nowrap">Concluída</th>
+                  <th class="nowrap">Nota</th>
+                  <th class="nowrap">Projeto</th>
+                  <th class="nowrap">Base</th>
+                  <th class="nowrap">Município</th>
+                  <th class="nowrap">Critério</th>
+                  <th class="nowrap">Prazo final</th>
+                </tr>
+              </thead>
+              <tbody id="admTbody">
+                <tr><td colspan="7" class="muted">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -480,6 +571,51 @@
     </div>
   </div>
 
+  <!-- Modal E-mail -->
+  <div class="overlay" id="overlayEmail">
+    <div class="modal">
+      <div class="modalHead">
+        <div>
+          <h3>Exportar por E-mail</h3>
+          <div class="muted">Somente destinatário <b>@neoenergia.com</b>. (Abre seu cliente de e-mail com o texto pronto)</div>
+        </div>
+        <button class="linkBtn" id="btnCloseEmail">Fechar</button>
+      </div>
+      <div class="modalBody">
+        <div class="modalGrid">
+          <div class="field" style="grid-column:1/-1">
+            <label>Para</label>
+            <input id="eTo" type="email" placeholder="grupo@neoenergia.com" />
+          </div>
+          <div class="field">
+            <label>De</label>
+            <input type="date" id="eDe" />
+          </div>
+          <div class="field">
+            <label>Até</label>
+            <input type="date" id="eAte" />
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label>Bases</label>
+            <div class="checkList" id="eBases"></div>
+            <div class="actions" style="margin-top:10px">
+              <button class="btn secondary" id="eSelAll">Selecionar todas</button>
+              <button class="btn secondary" id="eSelNone">Limpar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule" id="eMsg" style="padding:10px 0 0 0">
+          Você pode copiar o texto antes de abrir o e-mail.
+        </div>
+      </div>
+      <div class="modalFoot">
+        <button class="btn secondary" id="btnEmailCopy">Copiar texto</button>
+        <button class="btn" id="btnEmailOpen">Abrir e-mail</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Overlay Login -->
   <div class="overlay" id="overlayLogin">
     <div class="modal" style="width:min(560px,100%)">
@@ -532,17 +668,16 @@
     </div>
   </div>
 
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     // ======= CONFIG =======
     const SUPABASE_URL = "https://yyfhnuafwzeglwcpnmkd.supabase.co".trim();
     const SUPABASE_ANON_KEY = "sb_publishable_7rmfNL9N6limSSFxFcl2Og_MV9xkbjx".trim();
-
-    // Domínio permitido (frontend é só UX; segurança real é RLS + trigger SQL)
     const ALLOW_DOMAIN = "@neoenergia.com";
-    const ALSO_ALLOW_ADMIN = "mamutevitor@gmail.com"; // opcional (igual ao SQL)
+
+    // ADMIN (não exibimos em tela; só determina se mostra aba Admin)
+    const ADMIN_EMAIL = "mamutevitor@gmail.com";
 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -555,9 +690,8 @@
     let COL_PROJ  = "projeto";
     let COL_AGENT = "agente_responsavel";
 
-    // toggles
     let showExtras = false;
-    let mode = "ativas"; // ativas | concluidas
+    let mode = "ativas"; // ativas | concluidas | admin
 
     // estado
     let allRows = [];
@@ -565,6 +699,10 @@
     let municipios = [];
     let criterios = [];
     let currentNotaKey = null;
+
+    // admin state
+    let isAdmin = false;
+    let adminRows = [];
 
     const $ = (id) => document.getElementById(id);
     function show(el, on){ el.style.display = on ? "flex" : "none"; }
@@ -648,7 +786,7 @@
 
     function emailAllowedUX(email){
       const e = (email||"").trim().toLowerCase();
-      return e.endsWith(ALLOW_DOMAIN) || e === ALSO_ALLOW_ADMIN.toLowerCase();
+      return e.endsWith(ALLOW_DOMAIN) || e === ADMIN_EMAIL.toLowerCase();
     }
 
     async function signIn(){
@@ -718,6 +856,8 @@
       setAuthUI(false);
       show($("overlayDenied"), false);
       show($("overlayLogin"), true);
+      $("tabAdmin").style.display = "none";
+      isAdmin = false;
     }
 
     async function checkApprovedOrBlock(){
@@ -731,10 +871,12 @@
 
       setAuthUI(true);
 
-      // Checa aprovação via RPC (não expõe e-mail)
+      const email = (session.user.email || "").toLowerCase();
+      isAdmin = (email === ADMIN_EMAIL.toLowerCase());
+
+      // RPC me_status (não expõe email na UI)
       const { data, error } = await sb.rpc("me_status");
       if(error || !data || !data.length){
-        // Se não existir registro (ex: trigger não rodou), bloqueia
         show($("overlayLogin"), false);
         show($("overlayDenied"), true);
         return false;
@@ -746,6 +888,9 @@
         show($("overlayDenied"), true);
         return false;
       }
+
+      // mostra admin tab somente pro admin
+      $("tabAdmin").style.display = isAdmin ? "inline-flex" : "none";
 
       show($("overlayLogin"), false);
       show($("overlayDenied"), false);
@@ -801,11 +946,11 @@
         "titulo",
         "gerencia",
         "status",
-        "concluida"
+        "concluida",
+        "concluida_em"
       ].join(",");
 
       const { data, error } = await sb.from("obras").select(selectCols).limit(5000);
-
       if(error){
         showError(`Não consegui carregar 'obras'.\n\n${error.message}`);
         return;
@@ -814,6 +959,7 @@
       allRows = data || [];
       buildFacets();
       buildWhatsBases();
+      buildEmailBases();
       render();
     }
 
@@ -842,15 +988,32 @@
 
     function setMode(m){
       mode = m;
-      $("tabFiltros").classList.toggle("active", mode==="ativas");
+
+      $("tabAtivas").classList.toggle("active", mode==="ativas");
       $("tabConcluidas").classList.toggle("active", mode==="concluidas");
-      $("ruleText").innerHTML = (mode==="concluidas")
-        ? `Mostrando <b>Concluídas</b> (marcadas automaticamente quando nota = <b>Energizada</b>).`
-        : `Regras: mostra obras com <b>prazo final</b> na data escolhida. Se não houver, mostra as <b>5 mais próximas dentro de 5 dias</b>, separadas por Base.`;
-      render();
+      $("tabDetalhes").classList.toggle("active", mode==="detalhes");
+      $("tabAdmin").classList.toggle("active", mode==="admin");
+
+      $("paneFiltros").classList.toggle("active", mode==="ativas" || mode==="concluidas");
+      $("paneDetalhes").classList.toggle("active", mode==="detalhes");
+      $("paneAdmin").classList.toggle("active", mode==="admin");
+
+      if(mode==="concluidas"){
+        $("ruleText").innerHTML = `Mostrando <b>Concluídas</b> (marcadas por nota “<b>Energizada</b>” ou manualmente pelo Admin).`;
+      } else {
+        $("ruleText").innerHTML = `Regras: mostra obras com <b>prazo final</b> na data escolhida. Se não houver, mostra as <b>5 mais próximas dentro de 5 dias</b>, separadas por Base.`;
+      }
+
+      if(mode==="admin"){
+        loadAdmin();
+      } else {
+        render();
+      }
     }
 
     function render(){
+      if(mode==="admin") return;
+
       clearError();
 
       const chosenDate = $("fData").value ? new Date($("fData").value + "T00:00:00") : null;
@@ -860,7 +1023,6 @@
 
       let rows = allRows.slice();
 
-      // filtro concluidas
       if(mode==="concluidas") rows = rows.filter(r => !!r.concluida);
       else rows = rows.filter(r => !r.concluida);
 
@@ -1078,25 +1240,16 @@
       await loadAll(); // reflete concluída via trigger
     }
 
-    function openWhatsModal(){
-      const today = new Date(); today.setHours(0,0,0,0);
-      $("wDe").value = fmtDateInput(today);
-      $("wAte").value = fmtDateInput(addDays(today, 5));
-      $("overlayWhats").style.display = "flex";
-    }
-    function closeWhatsModal(){ $("overlayWhats").style.display = "none"; }
-
+    // WhatsApp bases
     function buildWhatsBases(){
       const wrap = $("wBases");
       if(!wrap) return;
       wrap.innerHTML = "";
-
       const list = (bases && bases.length) ? bases : [];
       if(!list.length){
         wrap.innerHTML = `<div class="muted">Carregue os dados primeiro.</div>`;
         return;
       }
-
       for(const b of list){
         const id = "wb_" + b.replace(/\W+/g,"_");
         const div = document.createElement("label");
@@ -1108,7 +1261,6 @@
         wrap.appendChild(div);
       }
     }
-
     function getSelectedWhatsBases(){
       return Array.from(document.querySelectorAll('#wBases input[type="checkbox"][data-base]'))
         .filter(c=>c.checked)
@@ -1121,17 +1273,11 @@
       d1.setHours(0,0,0,0);
       d2.setHours(0,0,0,0);
 
-      if(String(d1)==="Invalid Date" || String(d2)==="Invalid Date"){
-        return "Escolha datas válidas.";
-      }
-      if(d2 < d1){
-        return "A data final precisa ser maior ou igual à inicial.";
-      }
-      if(!basesSelected.length){
-        return "Selecione ao menos uma base.";
-      }
+      if(String(d1)==="Invalid Date" || String(d2)==="Invalid Date") return "Escolha datas válidas.";
+      if(d2 < d1) return "A data final precisa ser maior ou igual à inicial.";
+      if(!basesSelected.length) return "Selecione ao menos uma base.";
 
-      // WhatsApp: só ATIVAS (minimização)
+      // Whats: só ativas (minimização)
       const inRange = allRows
         .filter(r => !r.concluida)
         .map(r => ({ r, d: parseDateOnly(getField(r, COL_PRAZO)) }))
@@ -1150,9 +1296,7 @@
 
       const dateKeys = Array.from(map.keys()).sort((a,b)=>a.localeCompare(b));
       const header = `📌 Obras planejadas (${fmtDateBR(d1)} → ${fmtDateBR(d2)})`;
-      if(!dateKeys.length){
-        return `${header}\n\nNenhuma obra encontrada no período para as bases selecionadas.`;
-      }
+      if(!dateKeys.length) return `${header}\n\nNenhuma obra encontrada no período para as bases selecionadas.`;
 
       let msg = header + "\n";
       for(const dk of dateKeys){
@@ -1179,6 +1323,14 @@
     function openWhatsWithText(text){
       window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
     }
+
+    function openWhatsModal(){
+      const today = new Date(); today.setHours(0,0,0,0);
+      $("wDe").value = fmtDateInput(today);
+      $("wAte").value = fmtDateInput(addDays(today, 5));
+      $("overlayWhats").style.display = "flex";
+    }
+    function closeWhatsModal(){ $("overlayWhats").style.display = "none"; }
     function previewWhats(){
       const txt = buildWhatsTextRange($("wDe").value, $("wAte").value, getSelectedWhatsBases());
       alert(txt.length > 1500 ? (txt.slice(0,1500) + "\n\n...(prévia cortada)") : txt);
@@ -1186,10 +1338,272 @@
     function sendWhats(){
       const txt = buildWhatsTextRange($("wDe").value, $("wAte").value, getSelectedWhatsBases());
       if(txt.startsWith("Escolha") || txt.startsWith("A data") || txt.startsWith("Selecione")){
-        alert(txt);
-        return;
+        alert(txt); return;
       }
       openWhatsWithText(txt);
+    }
+
+    // E-mail export
+    function buildEmailBases(){
+      const wrap = $("eBases");
+      if(!wrap) return;
+      wrap.innerHTML = "";
+      const list = (bases && bases.length) ? bases : [];
+      if(!list.length){
+        wrap.innerHTML = `<div class="muted">Carregue os dados primeiro.</div>`;
+        return;
+      }
+      for(const b of list){
+        const id = "eb_" + b.replace(/\W+/g,"_");
+        const div = document.createElement("label");
+        div.className = "checkItem";
+        div.innerHTML = `
+          <input type="checkbox" data-base="${escapeHtml(b)}" id="${id}" checked />
+          <span>${escapeHtml(b)}</span>
+        `;
+        wrap.appendChild(div);
+      }
+    }
+    function getSelectedEmailBases(){
+      return Array.from(document.querySelectorAll('#eBases input[type="checkbox"][data-base]'))
+        .filter(c=>c.checked)
+        .map(c=>c.getAttribute("data-base"));
+    }
+    function openEmailModal(){
+      const today = new Date(); today.setHours(0,0,0,0);
+      $("eDe").value = fmtDateInput(today);
+      $("eAte").value = fmtDateInput(addDays(today, 5));
+      $("eTo").value = "";
+      $("eMsg").textContent = "Você pode copiar o texto antes de abrir o e-mail.";
+      $("eMsg").style.color = "var(--muted)";
+      $("overlayEmail").style.display = "flex";
+    }
+    function closeEmailModal(){ $("overlayEmail").style.display = "none"; }
+
+    function validateNeoenergiaRecipient(email){
+      const e = (email||"").trim().toLowerCase();
+      return e.endsWith(ALLOW_DOMAIN);
+    }
+
+    function buildEmailText(fromDate, toDate, basesSelected){
+      // mesma lógica do Whats, mas formato “e-mail”
+      const txt = buildWhatsTextRange(fromDate, toDate, basesSelected);
+      return txt;
+    }
+
+    async function copyToClipboard(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        return false;
+      }
+    }
+
+    async function emailCopy(){
+      const to = ($("eTo").value||"").trim();
+      if(!validateNeoenergiaRecipient(to)){
+        $("eMsg").textContent = "Destinatário precisa ser @neoenergia.com";
+        $("eMsg").style.color = "var(--warn)";
+        return;
+      }
+      const txt = buildEmailText($("eDe").value, $("eAte").value, getSelectedEmailBases());
+      const ok = await copyToClipboard(txt);
+      $("eMsg").textContent = ok ? "Texto copiado!" : "Não consegui copiar automaticamente. Selecione e copie manualmente.";
+      $("eMsg").style.color = ok ? "var(--accent)" : "var(--warn)";
+      if(!ok) alert(txt);
+    }
+
+    function emailOpen(){
+      const to = ($("eTo").value||"").trim();
+      if(!validateNeoenergiaRecipient(to)){
+        $("eMsg").textContent = "Destinatário precisa ser @neoenergia.com";
+        $("eMsg").style.color = "var(--warn)";
+        return;
+      }
+      const body = buildEmailText($("eDe").value, $("eAte").value, getSelectedEmailBases());
+      const subject = "UTEP - Obras planejadas";
+      // mailto tem limite de tamanho, então a gente abre e recomenda “copiar texto” se ficar grande
+      const url = "mailto:" + encodeURIComponent(to)
+        + "?subject=" + encodeURIComponent(subject)
+        + "&body=" + encodeURIComponent(body);
+
+      window.location.href = url;
+      $("eMsg").textContent = "Abrindo seu cliente de e-mail… (se o texto ficar grande, use Copiar texto).";
+      $("eMsg").style.color = "var(--muted)";
+    }
+
+    // Admin
+    async function loadAdmin(){
+      if(!isAdmin){
+        $("admTbody").innerHTML = `<tr><td colspan="7" class="muted">Sem permissão.</td></tr>`;
+        return;
+      }
+      // usa os dados já carregados (allRows) pra ser rápido
+      adminRows = allRows.slice();
+      renderAdminTable();
+    }
+
+    function renderAdminTable(){
+      const tbody = $("admTbody");
+      const q = ($("admSearch").value||"").trim().toLowerCase();
+      const onlyOpen = $("admOnlyOpen").checked;
+
+      let rows = adminRows.slice();
+      if(onlyOpen) rows = rows.filter(r=> !r.concluida);
+
+      if(q){
+        rows = rows.filter(r=>{
+          const nota = normalizeNota(getField(r, COL_NOTA)).toLowerCase();
+          const proj = String(getField(r, COL_PROJ)||"").toLowerCase();
+          const base = String(getField(r, COL_BASE)||"").toLowerCase();
+          const mun  = String(getField(r, COL_MUN)||"").toLowerCase();
+          const crit = String(getField(r, COL_CRIT)||"").toLowerCase();
+          return (nota.includes(q) || proj.includes(q) || base.includes(q) || mun.includes(q) || crit.includes(q));
+        });
+      }
+
+      rows = rows.slice().sort((a,b)=>{
+        const da = parseDateOnly(getField(a, COL_PRAZO));
+        const db = parseDateOnly(getField(b, COL_PRAZO));
+        if(!da && !db) return 0;
+        if(!da) return 1;
+        if(!db) return -1;
+        return da - db;
+      });
+
+      if(!rows.length){
+        tbody.innerHTML = `<tr><td colspan="7" class="muted">Nenhuma obra encontrada.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r=>{
+        const nota = normalizeNota(getField(r, COL_NOTA)) || "—";
+        const proj = getField(r, COL_PROJ) || "—";
+        const base = getField(r, COL_BASE) || "—";
+        const mun  = getField(r, COL_MUN) || "—";
+        const crit = getField(r, COL_CRIT) || "—";
+        const prazo = fmtDateBR(getField(r, COL_PRAZO)) || "—";
+        const checked = r.concluida ? "checked" : "";
+        return `
+          <tr>
+            <td class="nowrap"><input type="checkbox" data-nota="${escapeHtml(nota)}" ${checked} /></td>
+            <td class="nowrap">${escapeHtml(nota)}</td>
+            <td class="nowrap">${escapeHtml(proj)}</td>
+            <td class="nowrap">${escapeHtml(base)}</td>
+            <td class="nowrap">${escapeHtml(mun)}</td>
+            <td class="nowrap">${escapeHtml(crit)}</td>
+            <td class="nowrap">${escapeHtml(prazo)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll('input[type="checkbox"][data-nota]').forEach(chk=>{
+        chk.addEventListener("change", async ()=>{
+          const nota = chk.getAttribute("data-nota");
+          const mark = chk.checked;
+          await adminSetConcluida(nota, mark);
+        });
+      });
+    }
+
+    async function adminSetConcluida(notaKey, mark){
+      if(!isAdmin){
+        alert("Sem permissão."); return;
+      }
+      // update pelo campo nota (assumindo que nota identifica a obra)
+      const payload = mark
+        ? { concluida: true, concluida_em: new Date().toISOString() }
+        : { concluida: false, concluida_em: null };
+
+      const { error } = await sb
+        .from("obras")
+        .update(payload)
+        .eq(COL_NOTA.replaceAll('"',''), notaKey);
+
+      if(error){
+        alert("Erro ao atualizar: " + error.message);
+        return;
+      }
+
+      // atualiza cache local
+      const row = allRows.find(r => normalizeNota(getField(r, COL_NOTA)) === notaKey);
+      if(row){
+        row.concluida = !!mark;
+        row.concluida_em = mark ? new Date().toISOString() : null;
+      }
+      // re-render admin e dashboard
+      renderAdminTable();
+      if(mode !== "admin") render();
+    }
+
+    function toCSV(rows){
+      const cols = [
+        "nota","projeto","agente_responsavel","base","municipio","criterio","prazo_final","titulo","status","concluida"
+      ];
+      const lines = [cols.join(",")];
+      for(const r of rows){
+        const nota = normalizeNota(getField(r, COL_NOTA));
+        const proj = String(getField(r, COL_PROJ)||"");
+        const ag   = String(getField(r, COL_AGENT)||"");
+        const base = String(getField(r, COL_BASE)||"");
+        const mun  = String(getField(r, COL_MUN)||"");
+        const crit = String(getField(r, COL_CRIT)||"");
+        const prazo= String(getField(r, COL_PRAZO)||"").slice(0,10);
+        const tit  = String(r.titulo||"");
+        const st   = String(r.status||"");
+        const con  = r.concluida ? "true" : "false";
+        const vals = [nota,proj,ag,base,mun,crit,prazo,tit,st,con].map(v=> `"${String(v).replaceAll('"','""')}"`);
+        lines.push(vals.join(","));
+      }
+      return lines.join("\n");
+    }
+
+    function downloadTextFile(filename, text){
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function adminExportCsv(){
+      const csv = toCSV(adminRows);
+      downloadTextFile("obras_admin.csv", csv);
+    }
+
+    async function adminCopySummary(done){
+      const rows = allRows.filter(r => done ? !!r.concluida : !r.concluida);
+      const header = done ? "✅ Concluídas" : "📌 Ativas";
+      let txt = header + "\n";
+      for(const r of rows.slice(0, 2000)){
+        const nota = normalizeNota(getField(r, COL_NOTA)) || "—";
+        const proj = getField(r, COL_PROJ) || "—";
+        const base = getField(r, COL_BASE) || "—";
+        const prazo= fmtDateBR(getField(r, COL_PRAZO)) || "—";
+        txt += `- ${nota} • ${proj} • ${base} • ${prazo}\n`;
+      }
+      const ok = await copyToClipboard(txt.trim());
+      alert(ok ? "Resumo copiado!" : txt);
+    }
+
+    function adminPurgeCache(){
+      try{
+        localStorage.clear();
+        alert("Cache local limpo.");
+      }catch(e){
+        alert("Não consegui limpar.");
+      }
+    }
+
+    async function guard(){
+      const ok = await checkApprovedOrBlock();
+      if(!ok) return;
+      await loadAll();
     }
 
     function setToday(){
@@ -1197,12 +1611,6 @@
       now.setHours(0,0,0,0);
       $("fData").value = fmtDateInput(now);
       $("todayPill").textContent = "Data: " + fmtDateBR($("fData").value);
-    }
-
-    async function guard(){
-      const ok = await checkApprovedOrBlock();
-      if(!ok) return;
-      await loadAll();
     }
 
     (function init(){
@@ -1217,13 +1625,10 @@
       $("fMunicipio").addEventListener("change", render);
       $("fCriterio").addEventListener("change", render);
 
-      $("tabFiltros").addEventListener("click", ()=> setMode("ativas"));
+      $("tabAtivas").addEventListener("click", ()=> setMode("ativas"));
       $("tabConcluidas").addEventListener("click", ()=> setMode("concluidas"));
-      $("tabDetalhes").addEventListener("click", ()=>{
-        const isFiltros = $("paneFiltros").classList.contains("active");
-        $("paneFiltros").classList.toggle("active", !isFiltros);
-        $("paneDetalhes").classList.toggle("active", isFiltros);
-      });
+      $("tabDetalhes").addEventListener("click", ()=> setMode("detalhes"));
+      $("tabAdmin").addEventListener("click", ()=> setMode("admin"));
 
       $("tShowExtras").addEventListener("change", (e)=>{ showExtras = e.target.checked; render(); });
 
@@ -1235,11 +1640,28 @@
       $("btnSelAll").addEventListener("click", ()=>{ document.querySelectorAll('#wBases input[type="checkbox"][data-base]').forEach(c=>c.checked=true); });
       $("btnSelNone").addEventListener("click", ()=>{ document.querySelectorAll('#wBases input[type="checkbox"][data-base]').forEach(c=>c.checked=false); });
 
+      $("btnEmail").addEventListener("click", openEmailModal);
+      $("btnCloseEmail").addEventListener("click", closeEmailModal);
+      $("overlayEmail").addEventListener("click", (e)=>{ if(e.target === $("overlayEmail")) closeEmailModal(); });
+      $("btnEmailCopy").addEventListener("click", emailCopy);
+      $("btnEmailOpen").addEventListener("click", emailOpen);
+      $("eSelAll").addEventListener("click", ()=>{ document.querySelectorAll('#eBases input[type="checkbox"][data-base]').forEach(c=>c.checked=true); });
+      $("eSelNone").addEventListener("click", ()=>{ document.querySelectorAll('#eBases input[type="checkbox"][data-base]').forEach(c=>c.checked=false); });
+
       $("btnCloseNotes").addEventListener("click", closeNotes);
       $("btnCloseNotes2").addEventListener("click", closeNotes);
       $("overlayNotes").addEventListener("click", (e)=>{ if(e.target === $("overlayNotes")) closeNotes(); });
       $("btnSalvarNota").addEventListener("click", saveNote);
       $("btnRecarregarNotas").addEventListener("click", loadNotes);
+
+      // Admin UI events
+      $("btnAdminReload").addEventListener("click", ()=> loadAdmin());
+      $("admSearch").addEventListener("input", ()=> renderAdminTable());
+      $("admOnlyOpen").addEventListener("change", ()=> renderAdminTable());
+      $("btnAdminExportCsv").addEventListener("click", adminExportCsv);
+      $("btnAdminCopySummary").addEventListener("click", ()=> adminCopySummary(false));
+      $("btnAdminCopyDone").addEventListener("click", ()=> adminCopySummary(true));
+      $("btnAdminPurgeCache").addEventListener("click", adminPurgeCache);
 
       // Auth
       $("btnSignIn").addEventListener("click", signIn);
@@ -1248,7 +1670,6 @@
       $("btnDeniedLogout").addEventListener("click", logout);
 
       sb.auth.onAuthStateChange(()=> guard());
-
       guard();
     })();
   </script>
